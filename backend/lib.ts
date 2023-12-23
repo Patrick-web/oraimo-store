@@ -100,3 +100,21 @@ export async function fetchProductReviews({ productId }: { productId: string }) 
         return { error }
     }
 }
+
+
+export async function fetchSearchProducts({ query }: { query: string }) {
+    try {
+        const resp = await fetch(`https://ke.oraimo.com/catalogsearch/result/?q=${query}`, {
+            "method": "GET",
+        });
+        const html = await resp.text()
+        const { products, error } = getProductsFromHtml(html)
+        if (error) {
+            throw error
+        }
+        return { data: products }
+    } catch (error) {
+        console.log({ error });
+        return { error }
+    }
+}

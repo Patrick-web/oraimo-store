@@ -2,6 +2,18 @@ import { assert } from "https://deno.land/std@0.200.0/assert/assert.ts";
 import { DOMParser, Element } from "https://deno.land/x/deno_dom@v0.1.43/deno-dom-wasm.ts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
+const ProductSchema = z.object({
+    link: z.string().url(),
+    name: z.string(),
+    image: z.string().url(),
+    currency: z.string(),
+    price: z.number().min(2),
+    discountedPrice: z.number().min(2).nullable(),
+    rating: z.string(),
+    numberOfReviews: z.number(),
+    reviewsLink: z.string().url(),
+})
+
 export function getProductsFromHtml(html: string) {
     const document = new DOMParser().parseFromString(html, "text/html")
 
@@ -17,20 +29,40 @@ export function getProductsFromHtml(html: string) {
             const numberOfReviewsElement = element.querySelector(".reviews-actions")?.querySelector("a")
             const reviewsLinkElement = element.querySelector(".reviews-actions")?.querySelector("a")
 
+            // The first letters before the numbers, of pricesElements[1]?.textContent are the currency
+            const currencyRegex = /[A-Z]{3}/
 
-            return {
-                link: linkElement?.getAttribute("href") || "",
-                name: nameElement?.textContent.trim() || "",
-                image: imageElement?.getAttribute("src") || "",
-                initialPrice: pricesElements[1]?.textContent || 0,
-                discountedPrice: pricesElements[0]?.textContent || "",
-                rating: ratingElement?.textContent || "0%",
-                numberOfReviews: numberOfReviewsElement?.textContent.replace(/\D/g, "") || "0",
-                reviewsLink: reviewsLinkElement?.getAttribute("href") || ""
+            let price = ""
+            let discountedPrice = ""
+
+            if (pricesElements.length === 1) {
+                discountedPrice = pricesElements[0]?.textContent.replace(currencyRegex, "").replaceAll(",", "") || ""
+            } else {
+                price = pricesElements[1]?.textContent.replace(currencyRegex, "").replaceAll(",", "") || ""
+                discountedPrice = pricesElements[0]?.textContent.replace(currencyRegex, "").replaceAll(",", "") || ""
+            }
+
+
+            try {
+                const parsedProduct = ProductSchema.parse({
+                    link: linkElement?.getAttribute("href") || "",
+                    name: nameElement?.textContent.trim() || "",
+                    image: imageElement?.getAttribute("src") || "",
+                    currency: currencyRegex.exec(pricesElements[1]?.textContent || "")?.toString() || "",
+                    price: parseInt(price),
+                    discountedPrice: discountedPrice ? parseInt(discountedPrice) : null,
+                    rating: ratingElement?.textContent || "0%",
+                    numberOfReviews: parseInt(numberOfReviewsElement?.textContent.replace(/\D/g, "") || "0"),
+                    reviewsLink: reviewsLinkElement?.getAttribute("href") || ""
+                })
+
+                return parsedProduct
+            } catch (error) {
+                return null
             }
         })
 
-        const properProducts = products.filter(product => product.link && product.image && product.name)
+        const properProducts = products.filter(product => product !== null)
 
         return { products: properProducts }
     } else {
@@ -94,7 +126,6 @@ export function getProductDetail(html: string) {
         price: z.number(),
         oldPrice: z.number(),
         title: z.string(),
-        description: z.string(),
         imageUrl: z.string().url(),
         productUrl: z.string().url(),
         vendor: z.string(),
@@ -172,14 +203,45 @@ export function getProductDetail(html: string) {
             let reviewsCount = reviewsCountRegex.exec(pageHtml)?.toString().replace(/item_reviews_count":"|"/gm, "") || "0"
             const reviewRatingRegex = /item_reviews_score":"\d\.\d"/gm
             const reviewRating = reviewRatingRegex.exec(pageHtml)?.toString().replace(/item_reviews_score":"|"/gm, "") || "0"
+
+
+
+            // Get Product Description
+            const descriptionElement = document.querySelector(".product.attribute.description") as Element;
+            assert(descriptionElement);
+            const valueElement = descriptionElement.querySelector(".value");
+            assert(valueElement);
+            const pTags = [...valueElement!.querySelectorAll("p")] as Element[];
+            const productDescription: Record<string, string>[] = []
+            pTags?.forEach((pTag) => {
+                if (pTag.querySelector("img")) {
+                    const img = pTag.querySelector("img") as Element;
+                    if (img && img.getAttribute("src")) {
+                        productDescription.push({
+                            type: "image",
+                            src: img.getAttribute("src") as string
+                        })
+                    }
+                } else if (pTag.querySelector("strong")) {
+                    const strong = pTag.querySelector("strong") as Element;
+                    productDescription.push({
+                        type: "text",
+                        text: strong.textContent
+                    })
+                }
+            }
+            );
+
             return {
                 product: {
                     ...validatedDetails,
                     images,
                     rating: reviewRating,
                     numberOfReviews: reviewsCount,
+                    description: productDescription
                 }
             }
+
         } else {
             return { error: "Failed to create document" }
 
