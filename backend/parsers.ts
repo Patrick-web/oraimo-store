@@ -3,31 +3,29 @@ import { DOMParser, Element } from "https://deno.land/x/deno_dom@v0.1.43/deno-do
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const ProductSchema = z.object({
-    link: z.string().url(),
+    link: z.string(),
     name: z.string(),
     image: z.string().url(),
     currency: z.string(),
     price: z.number().min(2),
-    discountedPrice: z.number().min(2).nullable(),
+    discountedPrice: z.number().min(2).nullable().optional(),
     rating: z.string(),
-    numberOfReviews: z.number(),
-    reviewsLink: z.string().url(),
+    numberOfReviews: z.number().optional(),
 })
 
 export function getProductsFromHtml(html: string) {
     const document = new DOMParser().parseFromString(html, "text/html")
 
     if (document) {
-        const productElements = document?.querySelectorAll(".product-item-info") as Iterable<Element>
+        const productElements = document?.querySelectorAll(".site-product") as Iterable<Element>
         const products = [...productElements].map(element => {
             const linkElement = element.querySelector("a")
-            const nameElement = element.querySelector("strong")?.querySelector("a")
+            const nameElement = element.querySelector("h3")?.querySelector("span")
             const imageElement = element.querySelector("img")
-            const pricesElements = element.querySelectorAll(".price")
+            const pricesElements = element.querySelectorAll(".format_price")
             assert(pricesElements, "Prices Not found")
-            const ratingElement = element.querySelector(".rating-result")?.querySelector("span")?.querySelector("span")
-            const numberOfReviewsElement = element.querySelector(".reviews-actions")?.querySelector("a")
-            const reviewsLinkElement = element.querySelector(".reviews-actions")?.querySelector("a")
+            const ratingElement = element.querySelector(".active-bg")
+            const numberOfReviewsElement = element.querySelector(".review-number")
 
             // The first letters before the numbers, of pricesElements[1]?.textContent are the currency
             const currencyRegex = /[A-Z]{3}/
@@ -42,6 +40,17 @@ export function getProductsFromHtml(html: string) {
                 discountedPrice = pricesElements[0]?.textContent.replace(currencyRegex, "").replaceAll(",", "") || ""
             }
 
+            console.log({
+                link: linkElement?.getAttribute("href") || "",
+                name: nameElement?.textContent.trim() || "",
+                image: imageElement?.getAttribute("src") || "",
+                currency: currencyRegex.exec(pricesElements[1]?.textContent || "")?.toString() || "",
+                price: parseInt(price),
+                discountedPrice: discountedPrice ? parseInt(discountedPrice) : null,
+                rating: ratingElement?.outerHTML.match(/\d\d/gm)![0] || "00",
+                numberOfReviews: parseInt(numberOfReviewsElement?.textContent.replace(/\(|\)/gm, "") || "0"),
+            });
+
 
             try {
                 const parsedProduct = ProductSchema.parse({
@@ -51,13 +60,13 @@ export function getProductsFromHtml(html: string) {
                     currency: currencyRegex.exec(pricesElements[1]?.textContent || "")?.toString() || "",
                     price: parseInt(price),
                     discountedPrice: discountedPrice ? parseInt(discountedPrice) : null,
-                    rating: ratingElement?.textContent || "0%",
-                    numberOfReviews: parseInt(numberOfReviewsElement?.textContent.replace(/\D/g, "") || "0"),
-                    reviewsLink: reviewsLinkElement?.getAttribute("href") || ""
+                    rating: ratingElement?.outerHTML.replace(/\d\d/gm, "") || "00",
+                    numberOfReviews: parseInt(numberOfReviewsElement?.textContent.replace(/\(|\)/gm, "") || "0"),
                 })
 
                 return parsedProduct
             } catch (error) {
+                console.log(error);
                 return null
             }
         })
