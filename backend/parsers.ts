@@ -88,15 +88,12 @@ export function getCategoriesFromHtml(html: string) {
 
     if (document) {
         const mainCategoryElements = document?.querySelectorAll(".header-nav-sub>li") as Iterable<Element>
-        console.log("mainCategoryElements length:" + mainCategoryElements?.length || "null");
         const categories = [...mainCategoryElements].map(element => {
             const name = element.querySelector(".suber")?.textContent
             const image = element.querySelector(".header-nav-image>img")?.getAttribute("src")
             const link = element.querySelector(".suber")?.getAttribute("href")
             // #header > div.header-main > div.header-content > div.header-category-container > nav > ul > li:nth-child(3) > div > ul > li:nth-child(1) > ul > li:nth-child(2)
             const subCategoryElements = element.querySelectorAll(".header-nav-suber>li") as Iterable<Element>;
-
-            console.log("subCategoryElements length:" + subCategoryElements.length);
 
             const subCategories = [...subCategoryElements].map(elem => {
                 const subCatName = elem.querySelector("a")?.textContent || ""
