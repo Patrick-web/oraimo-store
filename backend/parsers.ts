@@ -130,6 +130,7 @@ const ProductDetailsSchema = z.object({
         type: z.enum(["image", "text"]),
         src: z.string().url().optional(),
         text: z.string().optional(),
+        weight: z.string().optional(),
     })),
     numberOfReviews: z.string(),
     overallRating: z.string(),
@@ -200,6 +201,7 @@ export function getProductDetail(html: string) {
             type: "image" | "text",
             src?: string,
             text?: string,
+            weight?: string,
         }[] = []
         pTags?.forEach((pTag) => {
             if (pTag.querySelector("img")) {
@@ -210,12 +212,30 @@ export function getProductDetail(html: string) {
                         src: img.getAttribute("src") as string
                     })
                 }
-            } else if (pTag.querySelector("span")) {
-                const span = pTag.querySelector("span") as Element;
-                productDescription.push({
-                    type: "text",
-                    text: span.textContent
-                })
+            } else {
+                const strongElements = [...pTag.querySelectorAll("strong") as Iterable<Element>];
+
+
+                if (strongElements && strongElements.length > 0) {
+                    strongElements.forEach((strongElement) => {
+                        const strongText = strongElement.textContent?.trim() || "";
+                        if (strongText) {
+                            productDescription.push({
+                                type: "text",
+                                text: strongText,
+                                weight: "bold",
+                            })
+                        }
+                    })
+                }
+                const extraText = pTag.textContent?.trim()
+                if (extraText) {
+                    productDescription.push({
+                        type: "text",
+                        text: extraText,
+                        weight: "normal",
+                    })
+                }
             }
         }
         );
