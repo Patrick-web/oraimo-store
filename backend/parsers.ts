@@ -18,6 +18,7 @@ export function getProductsFromHtml(html: string) {
 
     if (document) {
         const productElements = document?.querySelectorAll(".site-product") as Iterable<Element>
+
         const products = [...productElements].map(element => {
             const linkElement = element.querySelector("a")
             const nameElement = element.querySelector("h3")?.querySelector("span")
@@ -40,19 +41,11 @@ export function getProductsFromHtml(html: string) {
                 discountedPrice = pricesElements[0]?.textContent.replace(currencyRegex, "").replaceAll(",", "") || ""
             }
 
-            console.log({
-                link: linkElement?.getAttribute("href") || "",
-                name: nameElement?.textContent.trim() || "",
-                image: imageElement?.getAttribute("src") || "",
-                currency: currencyRegex.exec(pricesElements[1]?.textContent || "")?.toString() || "",
-                price: parseInt(price),
-                discountedPrice: discountedPrice ? parseInt(discountedPrice) : null,
-                rating: ratingElement?.outerHTML.match(/\d\d/gm)![0] || "00",
-                numberOfReviews: parseInt(numberOfReviewsElement?.textContent.replace(/\(|\)/gm, "") || "0"),
-            });
-
 
             try {
+                const ratingMatch = ratingElement?.outerHTML.match(/\d\d/gm);
+                const rating = ratingMatch ? ratingMatch[0] : "00";
+
                 const parsedProduct = ProductSchema.parse({
                     link: linkElement?.getAttribute("href") || "",
                     name: nameElement?.textContent.trim() || "",
@@ -60,7 +53,7 @@ export function getProductsFromHtml(html: string) {
                     currency: currencyRegex.exec(pricesElements[1]?.textContent || "")?.toString() || "",
                     price: parseInt(price),
                     discountedPrice: discountedPrice ? parseInt(discountedPrice) : null,
-                    rating: ratingElement?.outerHTML.replace(/\d\d/gm, "") || "00",
+                    rating: rating,
                     numberOfReviews: parseInt(numberOfReviewsElement?.textContent.replace(/\(|\)/gm, "") || "0"),
                 })
 
@@ -84,8 +77,6 @@ export function getProductsFromHtml(html: string) {
 export function getCategoriesFromHtml(html: string) {
     const document = new DOMParser().parseFromString(html, "text/html")
 
-    console.log("===============");
-
     if (document) {
         const mainCategoryElements = document?.querySelectorAll(".header-nav-sub>li") as Iterable<Element>
         const categories = [...mainCategoryElements].map(element => {
@@ -99,17 +90,14 @@ export function getCategoriesFromHtml(html: string) {
                 const subCatName = elem.querySelector("a")?.textContent || ""
                 return {
                     link: elem.querySelector("a")?.getAttribute("href") || "",
-                    name: subCatName.replace(/\n[\s\S]*/g, ""),
+                    name: subCatName.replace(/\n[\s\S]*/g, "").trim() || "",
                 }
             })
-
-            console.log({ subCategories });
-
 
             return {
                 link: link || "",
                 image: image || "",
-                name: name || "",
+                name: name?.trim() || "",
                 slug: name || "",
                 subCategories
             }
@@ -124,138 +112,172 @@ export function getCategoriesFromHtml(html: string) {
 }
 
 
+const ProductDetailsSchema = z.object({
+    name: z.string(),
+    price: z.string(),
+    discountedPrice: z.string().optional(),
+    highlightFeatures: z.array(z.object({
+        image: z.string().url(),
+        label: z.string(),
+    })),
+    images: z.array(z.string().url()),
+    parameters: z.array(z.object({
+        label: z.string(),
+        value: z.string(),
+    })),
+    // features is an array of objects with type image or text and src or text. If type is image, src is required. If type is text, text is required
+    description: z.array(z.object({
+        type: z.enum(["image", "text"]),
+        src: z.string().url().optional(),
+        text: z.string().optional(),
+    })),
+    numberOfReviews: z.string(),
+    overallRating: z.string(),
+    ratingsSummary: z.array(z.object({
+        rating: z.string(),
+        numberOfReviews: z.string(),
+    })),
+    firstReviews: z.array(z.object({
+        title: z.string(),
+        content: z.string(),
+        user: z.string(),
+        rating: z.string(),
+        date: z.string(),
+    })),
+    isSoldOut: z.boolean(),
+})
+
+
+// : { product: z.infer<typeof ProductDetailsSchema> } | { error: string } 
 
 export function getProductDetail(html: string) {
-    const ProductDetailsSchema = z.object({
-        productID: z.string(),
-        variantID: z.string(),
-        currency: z.string(),
-        tags: z.string(),
-        price: z.number(),
-        oldPrice: z.number(),
-        title: z.string(),
-        imageUrl: z.string().url(),
-        productUrl: z.string().url(),
-        vendor: z.string(),
-    })
-
-    const ProductImageSchema = z.object({
-        url: z.string().url(),
-        height: z.number().positive(),
-        width: z.number().positive(),
-        resized_width: z.number().positive(),
-        resized_height: z.number().positive(),
-        label: z.string(),
-        code: z.string().optional(),
-    })
-
     try {
         const document = new DOMParser().parseFromString(html, "text/html")
 
-        if (document) {
-            const productInfoScriptTag = document.querySelector("#omnisend-product-viewed");
-            // Get the product details script tag html
-            const productInfoScriptTagHtml = productInfoScriptTag?.outerHTML || "";
-            // Regex to get the product details
-            const infoAreaRegex = /\*":\s{([^}]*)}/;
-            // Get the product details
-            const infoArea = infoAreaRegex.exec(productInfoScriptTagHtml);
-            if (!infoArea) {
-                throw new Error("Product details not found.");
+        if (!document) throw new Error("Failed to create document")
+
+        const nameElement = document?.querySelector(".goods-title")
+        const name = nameElement?.textContent?.trim() || ""
+
+        const reviewElement = document?.querySelector(".review-box")
+        const ratingElement = document.querySelector("span.total-left")
+
+        const priceElement = document?.querySelector("#market_price")
+        const discountPriceElement = document?.querySelector("#final_price")
+
+        const highlightFeaturesWrapperElement = document.querySelector(".goods-desc")
+        const highlightFeaturesElements = highlightFeaturesWrapperElement?.querySelectorAll("p") as Iterable<Element>
+
+        const highlightFeatures: {
+            label: string,
+            image: string,
+        }[] = [];
+        [...highlightFeaturesElements].forEach(element => {
+            const imageElement = element.querySelector("img")
+            const textElement = element.querySelector("span")
+            if (imageElement && textElement) {
+                highlightFeatures.push({
+                    label: textElement?.textContent?.trim() || textElement.outerHTML,
+                    image: imageElement.getAttribute("src") || imageElement.outerHTML,
+                })
             }
-            const infoAreaJson = infoArea[0].replace(`*": {`, "");
-            // Regex to get the json data
-            const infoRegex = /{([^}]*)}/;
-            // Get the json data
-            const data = infoRegex.exec(infoAreaJson);
-            if (!data) {
-                throw new Error("Product details data not found.");
-            }
-            // Get the json data which is the first element in the array
-            const dat_ = data[0];
-            // Remove all new lines and spaces
-            const detailsString = dat_.replace(/^\s*|\n/gm, "").toString();
-            // Parse the json string to an object
-            const details = JSON.parse(detailsString);
-            // Validate the object
-            const validatedDetails = ProductDetailsSchema.parse(details);
+        })
+
+        const currencyRegex = /[A-Z]{3}/
+
+        let price = priceElement?.getAttribute("value") || ""
+        let discountedPrice = discountPriceElement?.getAttribute("value") || ""
 
 
-            // Get Product Images
-            const pageHtml = document.querySelector("body")?.outerHTML || "";
-            // Regex to get the product images
-            const regex = /\{"url([^}]*)\}/gm
-            const results = pageHtml.match(regex);
-            const thumbnailImages: z.infer<typeof ProductImageSchema>[] = []
-            results?.forEach((res) => {
-                try {
-                    const data = JSON.parse(res);
-                    const image = ProductImageSchema.parse(data);
-                    thumbnailImages.push(image);
-                } catch (error) {
-                    // console.log(error);
-                    // Just skip invalid data
-                }
-            })
-            const fullScaleImages = thumbnailImages.map(image => ({ ...image, url: image.url.replace(/cache\/(.*)\//gm, "") }));
+        const imagesElements = document.querySelector(".goods-swiper")?.querySelectorAll("img") as Iterable<Element>
+        const images = [...imagesElements].map(element => element.getAttribute("src") || "")
 
-            // array of images with their thumbnails
-            const images = fullScaleImages.map(image => ({
-                fullScale: image,
-                thumbnail: thumbnailImages.find(thumb => thumb.code === image.code)
-            }))
-
-
-            // Get Reviews Details
-            const reviewsCountRegex = /item_reviews_count":"\d*"/gm
-            let reviewsCount = reviewsCountRegex.exec(pageHtml)?.toString().replace(/item_reviews_count":"|"/gm, "") || "0"
-            const reviewRatingRegex = /item_reviews_score":"\d\.\d"/gm
-            const reviewRating = reviewRatingRegex.exec(pageHtml)?.toString().replace(/item_reviews_score":"|"/gm, "") || "0"
-
-
-
-            // Get Product Description
-            const descriptionElement = document.querySelector(".product.attribute.description") as Element;
-            assert(descriptionElement);
-            const valueElement = descriptionElement.querySelector(".value");
-            assert(valueElement);
-            const pTags = [...valueElement!.querySelectorAll("p")] as Element[];
-            const productDescription: Record<string, string>[] = []
-            pTags?.forEach((pTag) => {
-                if (pTag.querySelector("img")) {
-                    const img = pTag.querySelector("img") as Element;
-                    if (img && img.getAttribute("src")) {
-                        productDescription.push({
-                            type: "image",
-                            src: img.getAttribute("src") as string
-                        })
-                    }
-                } else if (pTag.querySelector("strong")) {
-                    const strong = pTag.querySelector("strong") as Element;
+        // Get Product Description
+        const descriptionElement = document.querySelector(".goods-description-content") as Element;
+        assert(descriptionElement, "Description Element not found");
+        const pTags = [...descriptionElement!.querySelectorAll("p")] as Element[];
+        const productDescription: {
+            type: "image" | "text",
+            src?: string,
+            text?: string,
+        }[] = []
+        pTags?.forEach((pTag) => {
+            if (pTag.querySelector("img")) {
+                const img = pTag.querySelector("img") as Element;
+                if (img && img.getAttribute("src")) {
                     productDescription.push({
-                        type: "text",
-                        text: strong.textContent
+                        type: "image",
+                        src: img.getAttribute("src") as string
                     })
                 }
+            } else if (pTag.querySelector("span")) {
+                const span = pTag.querySelector("span") as Element;
+                productDescription.push({
+                    type: "text",
+                    text: span.textContent
+                })
             }
-            );
+        }
+        );
+
+        const parameters = [...pTags[1].querySelectorAll("span")]?.map((span) => {
+            const label = span.textContent?.split(":")[0] || ""
+            const value = span.textContent?.split(":")[1] || ""
+            return { label: label.trim(), value: value.trim() }
+        }
+        );
+
+        const ratingsSummaryElement = document.querySelector(".overall-rating2") as Element;
+        const ratingsSummary = [...ratingsSummaryElement.querySelectorAll("p") as Iterable<Element>].map((p, index) => {
+            const rating = `${5 - index}.0`
+            const numberOfReviews = p.textContent?.trim() || "0"
+            return { rating, numberOfReviews }
+        }
+        );
+
+        const firstReviews = [...document.querySelectorAll(".review-item") as Iterable<Element>].map((reviewElement) => {
+            const reviewTitleElement = reviewElement.querySelector(".review-title")
+            const reviewContentElement = reviewElement.querySelector(".review-desc")
+            const reviewAuthorElement = reviewElement.querySelector(".review-author>span")
+            const reviewRatingElement = reviewElement.querySelector(".review-star>span")
+            const reviewDateElement = reviewElement.querySelector(".review-date")
 
             return {
-                product: {
-                    ...validatedDetails,
-                    images,
-                    rating: reviewRating,
-                    numberOfReviews: reviewsCount,
-                    description: productDescription
-                }
+                title: reviewTitleElement?.textContent?.trim() || "",
+                content: reviewContentElement?.textContent?.trim() || "",
+                user: reviewAuthorElement?.textContent?.trim() || "",
+                rating: reviewRatingElement?.getAttribute("title") || "0.0",
+                date: reviewDateElement?.textContent?.trim() || "",
             }
+        });
 
-        } else {
-            return { error: "Failed to create document" }
+        console.log(firstReviews);
 
+        // <button type="button" class="soldout-btn" style = "display: none;" > Sold Out < /button>
+
+        const soldOutButton = document.querySelector(".soldout-btn") as Element;
+        console.log(soldOutButton.outerHTML)
+        const isSoldOut = soldOutButton?.getAttribute("style")?.includes("display: none") || false;
+
+        return {
+            product: {
+                name,
+                price,
+                discountedPrice,
+                highlightFeatures,
+                images,
+                parameters,
+                description: productDescription,
+                numberOfReviews: reviewElement?.querySelector("i")?.textContent?.match(/\d+/gm)?.[0] || "",
+                overallRating: ratingElement?.textContent?.match(/\d\.\d/gm)?.[0] || "",
+                ratingsSummary,
+                firstReviews,
+                isSoldOut,
+            }
         }
+
     } catch (error) {
-        return { error: "Failed to create document" }
+        return { error: error.message }
     }
 }
 

@@ -1,20 +1,13 @@
 import { Application, Router } from "https://deno.land/x/oak@v12.6.1/mod.ts";
 import {
   fetchCategories,
-  fetchCategoryProducts,
+  fetchCollectionProducts,
   fetchDailyDealsPage,
   fetchHomePage,
   fetchProduct,
   fetchProductReviews,
   fetchSearchProducts,
 } from "./lib.ts";
-
-const books = new Map<string, any>();
-books.set("1", {
-  id: "1",
-  title: "The Hound of the Baskervilles",
-  author: "Conan Doyle, Arthur",
-});
 
 const router = new Router();
 router
@@ -31,22 +24,22 @@ router
 
     context.response.body = { data, error };
   })
-  .get("/categories", async (context) => {
+  .get("/collections", async (context) => {
     const { data, error } = await fetchCategories();
 
     context.response.body = { data, error };
   })
-  .get("/products/:category", async (context) => {
-    const category = context?.params?.category;
-    if (!category) {
+  .get("/collections/:collection", async (context) => {
+    const collection = context?.params?.collection;
+    if (!collection) {
       context.response.status = 401;
       context.response.body = {
-        error: "Please provide a category",
+        error: "Please provide a collection",
       };
       return;
     }
 
-    const { data, error } = await fetchCategoryProducts({ category });
+    const { data, error } = await fetchCollectionProducts({ collection });
 
     context.response.body = { data, error };
   })

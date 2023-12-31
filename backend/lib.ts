@@ -50,9 +50,9 @@ export async function fetchCategories() {
         return { error }
     }
 }
-export async function fetchCategoryProducts({ category }: { category: string }) {
+export async function fetchCollectionProducts({ collection }: { collection: string }) {
     try {
-        const resp = await fetch(`https://ke.oraimo.com/products/${category}.html`, {
+        const resp = await fetch(`https://ke.oraimo.com/collections/${collection}`, {
             "method": "GET",
         });
         const html = await resp.text()
@@ -69,7 +69,7 @@ export async function fetchCategoryProducts({ category }: { category: string }) 
 
 export async function fetchProduct({ slug }: { slug: string }) {
     try {
-        const resp = await fetch(`https://ke.oraimo.com/${slug}.html`, {
+        const resp = await fetch(`https://ke.oraimo.com/product/${slug}`, {
             "method": "GET",
         });
         const html = await resp.text()

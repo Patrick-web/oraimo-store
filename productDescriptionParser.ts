@@ -50,7 +50,7 @@ function parseProductDescription(descriptionHtml: string) {
         return { key, value };
     });
 
-    console.log(productParameters);
+    console.log({ productParameters });
 
     assert(value);
     // Extract the product features as an array with each item as a string both images and text
@@ -61,14 +61,12 @@ function parseProductDescription(descriptionHtml: string) {
     pTags?.forEach((pTag) => {
         if (pTag.querySelector("img")) {
             const img = pTag.querySelector("img") as Element;
-            console.log(img.getAttribute("src"));
             productFeatures.push({
                 type: "image",
                 src: img.getAttribute("src")
             })
         } else if (pTag.querySelector("strong")) {
             const strong = pTag.querySelector("strong") as Element;
-            console.log(strong.textContent);
             productFeatures.push({
                 type: "text",
                 text: strong.textContent
@@ -77,7 +75,7 @@ function parseProductDescription(descriptionHtml: string) {
     }
     );
 
-    console.log(productFeatures);
+    console.log({ productFeatures });
 
 
 
