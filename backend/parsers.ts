@@ -70,7 +70,7 @@ export function getProductsFromHtml(html: string) {
                 const parsedProduct = ProductSchema.parse({
                     link: linkElement?.getAttribute("href") || "",
                     name: nameElement?.textContent.trim() || "",
-                    image: imageElement?.getAttribute("src") || "",
+                    image: imageElement?.getAttribute("data-src") || "",
                     currency: currencyRegex.exec(pricesElements[1]?.textContent || "")?.toString() || "",
                     price: parseInt(price),
                     discountedPrice: discountedPrice ? parseInt(discountedPrice) : null,
