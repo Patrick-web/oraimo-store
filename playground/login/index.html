@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<script src="https://www.google.com/recaptcha/api.js?render=6Lcu3zcnAAAAABp-6-Z4txaYgu4-BMUY2fAXhTt5"></script>
+		<title>Document</title>
+	</head>
+	<body>
+		<button onclick="fetchRecaptcha()">Fetch Recaptcha</button>
+	</body>
+
+	<script>
+		var GOOGLE_RECAPTCHA = "6Lcu3zcnAAAAABp-6-Z4txaYgu4-BMUY2fAXhTt5";
+
+		var fetchRecaptcha = function () {
+			grecaptcha.ready(function () {
+				grecaptcha
+					.execute(GOOGLE_RECAPTCHA, { action: "homepage" })
+					.then(function (token) {
+						console.log(token);
+					});
+			});
+		};
+	</script>
+</html>
