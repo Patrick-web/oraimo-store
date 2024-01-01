@@ -18,7 +18,7 @@ export function getMainCollections(html: string) {
                 link,
             }
         })
-        return { mainCollections }
+        return { mainCollections: mainCollections.filter(collection => collection.name && collection.image && collection.link) }
     }
     return { error: "Failed to create document" }
 }
