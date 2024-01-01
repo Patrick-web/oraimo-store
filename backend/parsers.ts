@@ -2,6 +2,27 @@ import { assert } from "https://deno.land/std@0.200.0/assert/assert.ts";
 import { DOMParser, Element } from "https://deno.land/x/deno_dom@v0.1.43/deno-dom-wasm.ts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
+
+export function getMainCollections(html: string) {
+    const document = new DOMParser().parseFromString(html, "text/html")
+
+    if (document) {
+        const mainCollectionElements = [...document.querySelectorAll(".component > a")] as Element[]
+        const mainCollections = mainCollectionElements.map(element => {
+            const name = element.querySelector("span")?.textContent?.trim() || ""
+            const image = element.querySelector("img")?.getAttribute("data-src") || element.outerHTML
+            const link = element.getAttribute("href") || ""
+            return {
+                name,
+                image,
+                link,
+            }
+        })
+        return { mainCollections }
+    }
+    return { error: "Failed to create document" }
+}
+
 const ProductSchema = z.object({
     link: z.string(),
     name: z.string(),
@@ -9,7 +30,7 @@ const ProductSchema = z.object({
     currency: z.string(),
     price: z.number().min(2),
     discountedPrice: z.number().min(2).nullable().optional(),
-    rating: z.string(),
+    rating: z.number().min(0).max(5),
     numberOfReviews: z.number().optional(),
 })
 
@@ -53,7 +74,7 @@ export function getProductsFromHtml(html: string) {
                     currency: currencyRegex.exec(pricesElements[1]?.textContent || "")?.toString() || "",
                     price: parseInt(price),
                     discountedPrice: discountedPrice ? parseInt(discountedPrice) : null,
-                    rating: rating,
+                    rating: parseInt(rating) * 5 / 100,
                     numberOfReviews: parseInt(numberOfReviewsElement?.textContent.replace(/\(|\)/gm, "") || "0"),
                 })
 
@@ -64,7 +85,7 @@ export function getProductsFromHtml(html: string) {
             }
         })
 
-        const properProducts = products.filter(product => product !== null)
+        const properProducts = products.filter(product => product !== null) as z.infer<typeof ProductSchema>[]
 
         return { products: properProducts }
     } else {
@@ -198,7 +219,7 @@ export function getProductDetail(html: string) {
         assert(descriptionElement, "Description Element not found");
         const pTags = [...descriptionElement!.querySelectorAll("p")] as Element[];
         const productDescription: {
-            type: "image" | "text",
+            type: "image" | "text" | "youtube",
             src?: string,
             text?: string,
             weight?: string,
@@ -210,6 +231,14 @@ export function getProductDetail(html: string) {
                     productDescription.push({
                         type: "image",
                         src: img.getAttribute("src") as string
+                    })
+                }
+            } else if (pTag.querySelector("iframe")) {
+                const iframe = pTag.querySelector("iframe") as Element;
+                if (iframe && iframe.getAttribute("src")) {
+                    productDescription.push({
+                        type: "youtube",
+                        src: iframe.getAttribute("src") as string
                     })
                 }
             } else {

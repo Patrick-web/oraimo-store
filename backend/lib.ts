@@ -1,4 +1,4 @@
-import { getCategoriesFromHtml, getProductDetail, getProductReviews, getProductsFromHtml } from "./parsers.ts";
+import { getCategoriesFromHtml, getMainCollections, getProductDetail, getProductReviews, getProductsFromHtml } from "./parsers.ts";
 
 export async function fetchHomePage() {
     try {
@@ -7,10 +7,11 @@ export async function fetchHomePage() {
         });
         const html = await resp.text()
         const { products, error } = getProductsFromHtml(html)
-        if (error) {
-            throw error
+        const { mainCollections, error: error2 } = getMainCollections(html)
+        if (error || error2) {
+            throw error || error2
         }
-        return { data: products }
+        return { data: { mainCollections, products, } }
     } catch (error) {
         console.log({ error });
         return { error }
