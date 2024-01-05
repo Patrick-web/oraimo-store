@@ -253,7 +253,7 @@ export function getProductDetail(html: string) {
                         if (strongText) {
                             productDescription.push({
                                 type: "text",
-                                text: strongText,
+                                text: strongText.trim(),
                                 weight: "bold",
                             })
                         }
@@ -263,7 +263,7 @@ export function getProductDetail(html: string) {
                 if (extraText) {
                     productDescription.push({
                         type: "text",
-                        text: extraText.replace(/^.*-/gm, ""),
+                        text: extraText.replace(/^.*-/gm, "").trim(),
                         weight: "normal",
                     })
                 }
