@@ -220,7 +220,7 @@ export function getProductDetail(html: string) {
         const descriptionElement = document.querySelector(".goods-description-content") as Element;
         assert(descriptionElement, "Description Element not found");
         const pTags = [...descriptionElement!.querySelectorAll("p")] as Element[];
-        const productDescription: {
+        let productDescription: {
             type: "image" | "text" | "youtube",
             src?: string,
             text?: string,
@@ -229,10 +229,10 @@ export function getProductDetail(html: string) {
         pTags?.forEach((pTag) => {
             if (pTag.querySelector("img")) {
                 const img = pTag.querySelector("img") as Element;
-                if (img && img.getAttribute("src")) {
+                if (img && img.getAttribute("data-src")) {
                     productDescription.push({
                         type: "image",
-                        src: img.getAttribute("src") as string
+                        src: img.getAttribute("data-src") as string
                     })
                 }
             } else if (pTag.querySelector("iframe")) {
@@ -271,9 +271,21 @@ export function getProductDetail(html: string) {
         }
         );
 
-        const parameters = [...pTags[1].querySelectorAll("span")]?.map((span) => {
-            const label = span.textContent?.split(":")[0] || ""
-            const value = span.textContent?.split(":")[1] || ""
+
+        const descriptionStartIndex = productDescription.findLastIndex((description) => description.type === "text" && description.text?.includes("Product Features"));
+        if (descriptionStartIndex !== -1) {
+            productDescription = productDescription.slice(descriptionStartIndex + 1);
+        }
+
+
+        const parameters = pTags[1].outerHTML.replace("<p>", "").replace("</p>", "").split("<br>")?.map((text) => {
+            let split = text.split(":")
+            if (split.length === 1) {
+                // This is a freaking random edge case. But what the heck, this whole project is a random edge case
+                split = text.split("：")
+            }
+            const label = split[0] || ""
+            const value = split[1] || ""
             return { label: label.trim(), value: value.trim() }
         }
         );
@@ -286,7 +298,7 @@ export function getProductDetail(html: string) {
         }
         );
 
-        const firstReviews = [...document.querySelectorAll(".review-item") as Iterable<Element>].map((reviewElement) => {
+        let firstReviews = [...document.querySelectorAll(".review-item") as Iterable<Element>].map((reviewElement) => {
             const reviewTitleElement = reviewElement.querySelector(".review-title")
             const reviewContentElement = reviewElement.querySelector(".review-desc")
             const reviewAuthorElement = reviewElement.querySelector(".review-author>span")
@@ -302,12 +314,12 @@ export function getProductDetail(html: string) {
             }
         });
 
-        console.log(firstReviews);
+        // the first review is a template string. Remove it
+        firstReviews.shift()
 
         // <button type="button" class="soldout-btn" style = "display: none;" > Sold Out < /button>
 
         const soldOutButton = document.querySelector(".soldout-btn") as Element;
-        console.log(soldOutButton.outerHTML)
         const isSoldOut = soldOutButton?.getAttribute("style")?.includes("display: none") || false;
 
         return {
