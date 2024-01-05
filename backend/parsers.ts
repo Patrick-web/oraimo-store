@@ -324,7 +324,7 @@ export function getProductDetail(html: string) {
 
         return {
             product: {
-                name,
+                name: name.replace("oraimo", "").trim(),
                 price,
                 discountedPrice,
                 highlightFeatures,
