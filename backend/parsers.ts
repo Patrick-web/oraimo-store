@@ -263,7 +263,7 @@ export function getProductDetail(html: string) {
                 if (extraText) {
                     productDescription.push({
                         type: "text",
-                        text: extraText,
+                        text: extraText.replace(/^.*-/gm, ""),
                         weight: "normal",
                     })
                 }
@@ -276,7 +276,6 @@ export function getProductDetail(html: string) {
         if (descriptionStartIndex !== -1) {
             productDescription = productDescription.slice(descriptionStartIndex + 1);
         }
-
 
         const parameters = pTags[1].outerHTML.replace("<p>", "").replace("</p>", "").split("<br>")?.map((text) => {
             let split = text.split(":")
