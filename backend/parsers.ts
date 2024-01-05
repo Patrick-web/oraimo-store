@@ -24,6 +24,7 @@ export function getMainCollections(html: string) {
 }
 
 const ProductSchema = z.object({
+    id: z.string(),
     link: z.string(),
     name: z.string(),
     image: z.string().url(),
@@ -68,6 +69,7 @@ export function getProductsFromHtml(html: string) {
                 const rating = ratingMatch ? ratingMatch[0] : "00";
 
                 const parsedProduct = ProductSchema.parse({
+                    id: element.getAttribute("data-id") || "",
                     link: linkElement?.getAttribute("href") || "",
                     name: nameElement?.textContent.trim() || "",
                     image: imageElement?.getAttribute("data-src") || "",
