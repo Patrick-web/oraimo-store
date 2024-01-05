@@ -1,7 +1,7 @@
 import { Application, Router } from "https://deno.land/x/oak@v12.6.1/mod.ts";
 import {
-  fetchCategories,
   fetchCollectionProducts,
+  fetchCollections,
   fetchDailyDealsPage,
   fetchHomePage,
   fetchProduct,
@@ -25,7 +25,7 @@ router
     context.response.body = { data, error };
   })
   .get("/collections", async (context) => {
-    const { data, error } = await fetchCategories();
+    const { data, error } = await fetchCollections();
 
     context.response.body = { data, error };
   })

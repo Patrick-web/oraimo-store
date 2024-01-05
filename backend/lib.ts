@@ -1,4 +1,4 @@
-import { getCategoriesFromHtml, getMainCollections, getProductDetail, getProductReviews, getProductsFromHtml } from "./parsers.ts";
+import { getCollectionsFromHtml, getMainCollections, getProductDetail, getProductReviews, getProductsFromHtml } from "./parsers.ts";
 
 export async function fetchHomePage() {
     try {
@@ -35,13 +35,13 @@ export async function fetchDailyDealsPage() {
     }
 }
 
-export async function fetchCategories() {
+export async function fetchCollections() {
     try {
         const resp = await fetch(`https://ke.oraimo.com/`, {
             "method": "GET",
         });
         const html = await resp.text()
-        const { categories, error } = getCategoriesFromHtml(html)
+        const { categories, error } = getCollectionsFromHtml(html)
         if (error) {
             throw error
         }

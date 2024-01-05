@@ -95,7 +95,7 @@ export function getProductsFromHtml(html: string) {
 }
 
 
-export function getCategoriesFromHtml(html: string) {
+export function getCollectionsFromHtml(html: string) {
     const document = new DOMParser().parseFromString(html, "text/html")
 
     if (document) {
@@ -107,7 +107,7 @@ export function getCategoriesFromHtml(html: string) {
             // #header > div.header-main > div.header-content > div.header-category-container > nav > ul > li:nth-child(3) > div > ul > li:nth-child(1) > ul > li:nth-child(2)
             const subCategoryElements = element.querySelectorAll(".header-nav-suber>li") as Iterable<Element>;
 
-            const subCategories = [...subCategoryElements].map(elem => {
+            const subCollections = [...subCategoryElements].map(elem => {
                 const subCatName = elem.querySelector("a")?.textContent || ""
                 return {
                     link: elem.querySelector("a")?.getAttribute("href") || "",
@@ -120,7 +120,7 @@ export function getCategoriesFromHtml(html: string) {
                 image: image || "",
                 name: name?.trim() || "",
                 slug: name || "",
-                subCategories
+                subCollections
             }
         })
 

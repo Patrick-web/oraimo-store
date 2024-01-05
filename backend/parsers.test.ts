@@ -1,5 +1,5 @@
 import { assertEquals } from "https://deno.land/std@0.210.0/testing/asserts.ts";
-import { getCategoriesFromHtml, getProductsFromHtml } from './parsers.ts';
+import { getCollectionsFromHtml, getProductsFromHtml } from './parsers.ts';
 
 Deno.test('getProductsFromHtml should parse HTML and return proper products', () => {
     const html = `
@@ -122,7 +122,7 @@ Deno.test('getCategoriesFromHtml should parse HTML and return proper categories'
         },
     ];
 
-    const result = getCategoriesFromHtml(html);
+    const result = getCollectionsFromHtml(html);
 
     assertEquals(result.categories, expectedCategories);
 });
