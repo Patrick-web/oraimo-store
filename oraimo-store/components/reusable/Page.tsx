@@ -41,8 +41,6 @@ const Page = forwardRef(
 		let splitPath = path.split("/");
 		splitPath.shift();
 
-		console.log(splitPath);
-
 		return (
 			<SafeAreaView>
 				{disableHeader ? (
@@ -75,7 +73,7 @@ const Page = forwardRef(
 								>
 									<ThemedIcon name="chevron-left" size={25} />
 								</ThemedButton>
-								<ThemedText size="xl" weight="bold">
+								<ThemedText size="lg" weight="bold">
 									{header?.title}
 								</ThemedText>
 								<ThemedButton
@@ -96,6 +94,8 @@ const Page = forwardRef(
 						color={backgroundColor}
 						style={{ minHeight: "100%" }}
 						width={sWidth}
+						px={15}
+						pb={header ? 120 : 30}
 						{...props}
 					>
 						<ScrollView
@@ -112,6 +112,7 @@ const Page = forwardRef(
 						color={backgroundColor}
 						style={{ minHeight: "100%" }}
 						px={15}
+						pb={header ? 120 : 30}
 						{...props}
 					>
 						{children}

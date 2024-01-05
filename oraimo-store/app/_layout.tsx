@@ -1,5 +1,3 @@
-import Box from "@/components/reusable/Box";
-import { sHeight } from "@/constants/Window";
 import { useThemeColor } from "@/hooks/theme.hook";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import {
@@ -65,11 +63,9 @@ function RootLayoutNav() {
 	return (
 		<SafeAreaProvider>
 			<ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-				<Box color={background} height={sHeight}>
-					<Stack initialRouteName="tabs">
-						<Stack.Screen name="tabs" options={{ headerShown: false }} />
-					</Stack>
-				</Box>
+				<Stack initialRouteName="tabs">
+					<Stack.Screen name="tabs" options={{ headerShown: false }} />
+				</Stack>
 			</ThemeProvider>
 		</SafeAreaProvider>
 	);

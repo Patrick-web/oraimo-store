@@ -1,9 +1,6 @@
-import ProductCard, {
-	ProductCardSkeleton,
-} from "@/components/explore/ProductCard";
-import Box from "@/components/reusable/Box";
 import ThemedButton from "@/components/reusable/Buttons";
 import Page from "@/components/reusable/Page";
+import ProductsContainer from "@/components/reusable/ProductsContainer";
 import ThemedText from "@/components/reusable/ThemedText";
 import { BASE_URL } from "@/constants/API";
 import { ProductItemType } from "@/types/product.types";
@@ -13,11 +10,12 @@ import { router, useLocalSearchParams } from "expo-router";
 import React from "react";
 
 export default function SubCollectionPage() {
-	const { collection } = useLocalSearchParams<{
-		collection: string;
+	const { link, name } = useLocalSearchParams<{
+		name: string;
+		link: string;
 	}>();
 
-	if (!collection) {
+	if (!link) {
 		return (
 			<Page>
 				<ThemedText>
@@ -28,56 +26,30 @@ export default function SubCollectionPage() {
 		);
 	}
 
+	const queryUrl = `${BASE_URL}${link}`;
+
+	console.log({ queryUrl });
+
 	const collectionProductsQuery = useQuery<ReturnWrapper<ProductItemType[]>>({
-		queryKey: [`collection/${collection}`],
-		queryFn: () =>
-			fetch(`${BASE_URL}/collections/${collection.toLowerCase()}`).then((res) =>
-				res.json()
-			),
+		queryKey: [`collection/${link}`],
+		queryFn: () => fetch(queryUrl).then((res) => res.json()),
 	});
 
-	const products = collectionProductsQuery.data?.data;
-
-	console.log(products);
+	const products = collectionProductsQuery.data?.data || [];
 
 	return (
 		<Page
 			header={{
-				title: collection,
+				title: name,
 			}}
 			px={0}
 			scrollable
 			gap={10}
 		>
-			{collectionProductsQuery.isLoading && (
-				<Box
-					wrap="wrap"
-					style={{ rowGap: 10 }}
-					direction="row"
-					block
-					justify="space-between"
-					px={15}
-				>
-					<ProductCardSkeleton />
-					<ProductCardSkeleton />
-					<ProductCardSkeleton />
-					<ProductCardSkeleton />
-				</Box>
-			)}
-			{products && (
-				<Box
-					wrap="wrap"
-					style={{ rowGap: 10 }}
-					direction="row"
-					block
-					justify="space-between"
-					px={15}
-				>
-					{products?.map((product) => (
-						<ProductCard key={product.id} product={product} />
-					))}
-				</Box>
-			)}
+			<ProductsContainer
+				products={products}
+				loading={collectionProductsQuery.isLoading}
+			/>
 		</Page>
 	);
 }

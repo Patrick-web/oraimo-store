@@ -1,9 +1,7 @@
-import ProductCard, {
-	ProductCardSkeleton,
-} from "@/components/explore/ProductCard";
 import Box from "@/components/reusable/Box";
 import ThemedButton from "@/components/reusable/Buttons";
 import Page from "@/components/reusable/Page";
+import ProductsContainer from "@/components/reusable/ProductsContainer";
 import ThemedIcon from "@/components/reusable/ThemedIcon";
 import ThemedText from "@/components/reusable/ThemedText";
 import { BASE_URL } from "@/constants/API";
@@ -38,7 +36,7 @@ export default function CollectionPage() {
 			),
 	});
 
-	const products = collectionProductsQuery.data?.data;
+	const products = collectionProductsQuery.data?.data || [];
 
 	return (
 		<Page px={0} scrollable gap={10} disableHeader>
@@ -100,7 +98,8 @@ export default function CollectionPage() {
 								router.push({
 									pathname: "/tabs/explore/subcollection",
 									params: {
-										collection: subCollection.name.replace(" ", "-"),
+										name: subCollection.name,
+										link: subCollection.link,
 									},
 								});
 							}}
@@ -118,35 +117,11 @@ export default function CollectionPage() {
 					))}
 				</Box>
 			)}
-			{collectionProductsQuery.isLoading && (
-				<Box
-					wrap="wrap"
-					style={{ rowGap: 10 }}
-					direction="row"
-					block
-					justify="space-between"
-					px={15}
-				>
-					<ProductCardSkeleton />
-					<ProductCardSkeleton />
-					<ProductCardSkeleton />
-					<ProductCardSkeleton />
-				</Box>
-			)}
-			{products && (
-				<Box
-					wrap="wrap"
-					style={{ rowGap: 10 }}
-					direction="row"
-					block
-					justify="space-between"
-					px={15}
-				>
-					{products?.map((product) => (
-						<ProductCard key={product.id} product={product} />
-					))}
-				</Box>
-			)}
+			<ProductsContainer
+				products={products}
+				loading={collectionProductsQuery.isLoading}
+				numberOfSkeletons={4}
+			/>
 		</Page>
 	);
 }

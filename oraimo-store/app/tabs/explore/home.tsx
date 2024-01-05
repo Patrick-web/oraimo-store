@@ -12,12 +12,12 @@ import ThemedText from "@/components/reusable/ThemedText";
 import { BASE_URL } from "@/constants/API";
 import { sWidth } from "@/constants/Window";
 import { useThemeColor } from "@/hooks/theme.hook";
-import { CollectionType, MainCollectionType } from "@/types/collection.types";
+import { Collection, MainCollectionType } from "@/types/collection.types";
 import { ProductItemType } from "@/types/product.types";
 import { ReturnWrapper } from "@/types/util.types";
 import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
-import { Pressable } from "react-native";
+import { Image, Pressable } from "react-native";
 import Carousel from "react-native-reanimated-carousel";
 
 export default function Home() {
@@ -32,20 +32,12 @@ export default function Home() {
 		refetchOnMount: true,
 	});
 
-	if (homeQuery.isLoading) {
-		console.log("loading Home Query");
-	}
-
-	const collectionsQuery = useQuery<ReturnWrapper<CollectionType[]>>({
+	const collectionsQuery = useQuery<ReturnWrapper<Collection[]>>({
 		queryKey: ["collections"],
 		queryFn: () => fetch(`${BASE_URL}/collections`).then((res) => res.json()),
 		enabled: !homeQuery.isLoading,
 		refetchOnMount: true,
 	});
-
-	if (collectionsQuery.isLoading) {
-		console.log("loading Collections Query");
-	}
 
 	if (collectionsQuery.isLoading) {
 		return <HomeSkeleton />;
@@ -68,7 +60,7 @@ export default function Home() {
 	const products = homeQuery.data?.data.products;
 
 	return (
-		<Page px={15} py={15} gap={15} scrollable disableHeader>
+		<Page px={15} pb={130} gap={40} scrollable headerComponent={<HomeHeader />}>
 			<SearchBar />
 			{collections && (
 				<Box gap={10} wrap="wrap" direction="row">
@@ -97,11 +89,6 @@ export default function Home() {
 						<ThemedText size="lg" weight="bold">
 							Featured
 						</ThemedText>
-						{/* <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-					{products.slice(0, 8).map((product) => (
-						<ProductCard key={product.id} product={product} />
-					))}
-				</ScrollView> */}
 						<Carousel
 							data={products.slice(0, 8)}
 							renderItem={({ item }) => (
@@ -193,5 +180,20 @@ function HomeError() {
 		<Page>
 			<ThemedText>Error</ThemedText>
 		</Page>
+	);
+}
+
+function HomeHeader() {
+	const background = useThemeColor("background");
+	const textColor = useThemeColor("text");
+	return (
+		<Box block align="center" py={10} color={background} justify="center">
+			<Image
+				source={require("@/assets/images/logo.png")}
+				style={{ width: 100, height: 50 }}
+				resizeMode="contain"
+				tintColor={textColor}
+			/>
+		</Box>
 	);
 }
