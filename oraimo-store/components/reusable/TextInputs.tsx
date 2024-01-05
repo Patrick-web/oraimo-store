@@ -36,7 +36,7 @@ export default function ThemedTextInput({
 	const sizeStyles = getTextStyles(size);
 
 	return (
-		<Box style={{ flexGrow: 1 }}>
+		<Box>
 			{label && (
 				<>
 					<ThemedText size={"sm"} fontWeight="light" {...labelProps}>
@@ -71,7 +71,6 @@ export default function ThemedTextInput({
 								? sizeStyles.paddingHorizontal / 4
 								: sizeStyles.paddingHorizontal,
 							paddingVertical: sizeStyles.paddingVertical,
-							fontFamily: "Mulish",
 							fontSize: sizeStyles.fontSize,
 							color: theme.text,
 							minWidth: input.placeholder?.length

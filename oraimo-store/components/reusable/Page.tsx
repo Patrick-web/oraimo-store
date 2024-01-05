@@ -1,11 +1,26 @@
-import Colors from "@/constants/Colors";
 import { sWidth } from "@/constants/Window";
+import { useThemeColor } from "@/hooks/theme.hook";
+import { router, usePathname } from "expo-router";
 import React, { ReactNode, forwardRef, useImperativeHandle } from "react";
-import { ScrollView, useColorScheme } from "react-native";
+import { ScrollView } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import Box, { BoxProps } from "./Box";
+import ThemedButton from "./Buttons";
+import ThemedIcon from "./ThemedIcon";
+import ThemedText from "./ThemedText";
 
 const Page = forwardRef(
-	({ children, scrollable = false, ...props }: PageProps, ref) => {
+	(
+		{
+			children,
+			scrollable = false,
+			header,
+			headerComponent,
+			disableHeader = false,
+			...props
+		}: PageProps,
+		ref
+	) => {
 		const scrollRef = React.useRef<ScrollView>(null);
 
 		function scrollToTop() {
@@ -21,34 +36,88 @@ const Page = forwardRef(
 			scrollToBottom,
 		}));
 
-		const colorScheme = useColorScheme();
-		const theme = Colors[colorScheme ?? "light"];
+		const backgroundColor = useThemeColor("background");
+		const path = usePathname();
+		let splitPath = path.split("/");
+		splitPath.shift();
+
+		console.log(splitPath);
 
 		return (
-			<>
+			<SafeAreaView>
+				{disableHeader ? (
+					<Box color={backgroundColor} />
+				) : (
+					<Box
+						block
+						justify="space-between"
+						align="center"
+						color={backgroundColor}
+					>
+						{headerComponent ? (
+							headerComponent
+						) : (
+							<Box
+								direction="row"
+								align="center"
+								justify="space-between"
+								gap={10}
+								block
+								px={15}
+								py={15}
+							>
+								<ThemedButton
+									type="text"
+									size="sm"
+									onPress={() => {
+										router.back();
+									}}
+								>
+									<ThemedIcon name="chevron-left" size={25} />
+								</ThemedButton>
+								<ThemedText size="xl" weight="bold">
+									{header?.title}
+								</ThemedText>
+								<ThemedButton
+									type="text"
+									size="sm"
+									onPress={() => {
+										router.back();
+									}}
+								>
+									<ThemedIcon name="search" size={25} />
+								</ThemedButton>
+							</Box>
+						)}
+					</Box>
+				)}
 				{scrollable ? (
-					<ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
-						<Box
-							width={sWidth}
-							flex={1}
-							color={theme.background}
-							height={"100%"}
-							{...props}
+					<Box
+						color={backgroundColor}
+						style={{ minHeight: "100%" }}
+						width={sWidth}
+						{...props}
+					>
+						<ScrollView
+							contentContainerStyle={{
+								gap: props.gap,
+							}}
 						>
 							{children}
-						</Box>
-					</ScrollView>
+						</ScrollView>
+					</Box>
 				) : (
 					<Box
 						width={sWidth}
-						color={theme.background}
+						color={backgroundColor}
 						style={{ minHeight: "100%" }}
+						px={15}
 						{...props}
 					>
 						{children}
 					</Box>
 				)}
-			</>
+			</SafeAreaView>
 		);
 	}
 );
@@ -63,6 +132,6 @@ interface PageProps extends BoxProps {
 		title: string;
 		disableBackButton?: boolean;
 		rightComponent?: ReactNode;
-	};
+	} | null;
 	disableHeader?: boolean;
 }

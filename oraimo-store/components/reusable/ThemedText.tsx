@@ -1,11 +1,13 @@
-import Colors from "@/constants/Colors";
+import { useThemeColor } from "@/hooks/theme.hook";
 import React, { ReactNode } from "react";
-import { Text, TextProps, TextStyle, useColorScheme } from "react-native";
+import { Text, TextProps, TextStyle } from "react-native";
 
 const ThemedText = ({
 	style,
 	size = "md",
 	color,
+	darkColor,
+	lightColor,
 	weight = "normal",
 	fontWeight,
 	align = "auto",
@@ -19,13 +21,11 @@ const ThemedText = ({
 	textShadowRadius,
 	textShadowColor,
 	includeFontPadding,
-	fontFamily = "Mulish",
+	fontFamily,
 	fontVariant,
 	letterSpacing,
-	darkModeColor,
-	icon,
-	textProps,
 	children,
+	...textProps
 }: ThemedTextProps) => {
 	const textSize = () => {
 		if (typeof size === "string") {
@@ -38,16 +38,15 @@ const ThemedText = ({
 		}
 	};
 
-	const colorScheme = useColorScheme();
+	const themeColor = useThemeColor("text", {
+		light: lightColor,
+		dark: darkColor,
+	});
 
 	return (
 		<Text
 			style={{
-				color: color
-					? color
-					: darkModeColor
-					? darkModeColor
-					: Colors[colorScheme ?? "light"].text,
+				color: color ?? themeColor,
 				fontSize: textSize(),
 				fontWeight: weight,
 				width: "auto",
@@ -62,9 +61,9 @@ const ThemedText = ({
 				textShadowRadius,
 				textShadowColor,
 				includeFontPadding,
-				fontFamily: fontWeight
-					? mapFontweightToFontFamily(fontWeight)
-					: fontFamily,
+				// fontFamily: fontWeight
+				// 	? mapFontweightToFontFamily(fontWeight)
+				// 	: fontFamily,
 				fontVariant,
 				letterSpacing,
 				...style,
@@ -113,7 +112,7 @@ const textSizes = [
 
 type TextSize = (typeof textSizes)[number]["size"];
 
-export interface ThemedTextProps {
+export interface ThemedTextProps extends TextProps {
 	color?: TextStyle["color"];
 	style?: TextStyle;
 	size?: TextStyle["fontSize"] | TextSize;
@@ -133,7 +132,8 @@ export interface ThemedTextProps {
 	fontVariant?: TextStyle["fontVariant"];
 	letterSpacing?: TextStyle["letterSpacing"];
 	fontWeight?: FontWeight;
-	darkModeColor?: TextStyle["color"];
+	darkColor?: string;
+	lightColor?: string;
 	icon?: {
 		name: any;
 		position?: "append" | "prepend";

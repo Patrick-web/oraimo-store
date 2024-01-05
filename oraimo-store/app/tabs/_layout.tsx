@@ -1,5 +1,5 @@
 import Feather from "@expo/vector-icons/Feather";
-import { Tabs } from "expo-router";
+import { Tabs, usePathname } from "expo-router";
 import { Image, useColorScheme } from "react-native";
 
 import Box from "@/components/reusable/Box";
@@ -18,6 +18,10 @@ function TabBarIcon(props: {
 export default function TabLayout() {
 	const colorScheme = useColorScheme();
 
+	const path = usePathname();
+
+	console.log(path);
+
 	return (
 		<Tabs
 			screenOptions={{
@@ -27,11 +31,13 @@ export default function TabLayout() {
 			initialRouteName="home"
 		>
 			<Tabs.Screen
-				name="home"
+				name="explore"
 				options={{
 					title: "Home",
 					tabBarIcon: ({ color }) => <TabBarIcon name="home" color={color} />,
 					header: () => {
+						const splitPath = path.split("/");
+						if (splitPath.length > 2) return null;
 						return (
 							<Box
 								block

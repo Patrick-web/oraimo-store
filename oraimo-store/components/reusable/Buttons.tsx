@@ -1,4 +1,5 @@
 import Colors from "@/constants/Colors";
+import { useThemeColor } from "@/hooks/theme.hook";
 import React, { ReactNode } from "react";
 import {
 	ActivityIndicator,
@@ -70,7 +71,14 @@ const ThemedButton = (props: ThemedButtonProps) => {
 		}
 	};
 
+	const textColor = useThemeColor("text");
+
 	const labelColor = () => {
+		if (labelProps?.color) return labelProps.color;
+
+		if (type === "text") {
+			return textColor;
+		}
 		if (type === "primary") {
 			return "white";
 		}
