@@ -249,21 +249,21 @@ export function getProductDetail(html: string) {
 
                 if (strongElements && strongElements.length > 0) {
                     strongElements.forEach((strongElement) => {
-                        const strongText = strongElement.textContent?.trim() || "";
+                        const strongText = strongElement.textContent || "";
                         if (strongText) {
                             productDescription.push({
                                 type: "text",
-                                text: strongText.trim(),
+                                text: strongText,
                                 weight: "bold",
                             })
                         }
                     })
                 }
-                const extraText = pTag.textContent?.trim()
+                const extraText = pTag.textContent
                 if (extraText) {
                     productDescription.push({
                         type: "text",
-                        text: extraText.replace(/^.*-/gm, "").trim(),
+                        text: extraText,
                         weight: "normal",
                     })
                 }
@@ -276,6 +276,23 @@ export function getProductDetail(html: string) {
         if (descriptionStartIndex !== -1) {
             productDescription = productDescription.slice(descriptionStartIndex + 1);
         }
+
+        const boldTexts = productDescription.filter((description) => description.type === "text" && description.weight === "bold");
+
+        boldTexts.forEach((boldText, index) => {
+            productDescription.forEach((description, descriptionIndex) => {
+                if (description.type === "text" && description.weight === "normal") {
+                    if (description.text?.includes(boldText.text as string)) {
+                        productDescription[descriptionIndex] = {
+                            ...description,
+                            text: description.text?.replace(boldText.text as string, ""),
+                        }
+                    }
+                }
+            })
+        })
+
+        productDescription = productDescription.filter((description) => description.type === "text" ? description.text?.trim() === "" ? false : true : true);
 
         const parameters = pTags[1].outerHTML.replace("<p>", "").replace("</p>", "").split("<br>")?.map((text) => {
             let split = text.split(":")
