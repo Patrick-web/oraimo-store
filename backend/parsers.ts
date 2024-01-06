@@ -116,6 +116,7 @@ export function getCollectionsFromHtml(html: string) {
                 return {
                     link: elem.querySelector("a")?.getAttribute("href") || "",
                     name: subCatName.replace(/\n[\s\S]*/g, "").trim() || "",
+                    slug: elem.querySelector("a")?.getAttribute("href")?.split("/").pop()?.replace(/\?.*/gm, "") || "",
                 }
             })
 
