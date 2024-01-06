@@ -123,7 +123,7 @@ export function getCollectionsFromHtml(html: string) {
                 link: link || "",
                 image: image || "",
                 name: name?.trim() || "",
-                slug: name || "",
+                slug: link?.split("/").pop()?.replace(/\?.*/gm, "") || "",
                 subCollections
             }
         })
