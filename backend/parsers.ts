@@ -314,6 +314,9 @@ export function getProductDetail(html: string) {
             }
         })
 
+        // remove all empty parameters
+        parameters = parameters.filter((parameter) => parameter.label !== "" && parameter.value !== "");
+
         const ratingsSummaryElement = document.querySelector(".overall-rating2") as Element;
         const ratingsSummary = [...ratingsSummaryElement.querySelectorAll("p") as Iterable<Element>].map((p, index) => {
             const rating = `${5 - index}.0`
