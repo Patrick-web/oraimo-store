@@ -294,7 +294,7 @@ export function getProductDetail(html: string) {
 
         productDescription = productDescription.filter((description) => description.type === "text" ? description.text?.trim() === "" ? false : true : true);
 
-        const parameters = pTags[1].outerHTML.replace("<p>", "").replace("</p>", "").split("<br>")?.map((text) => {
+        let parameters = pTags[1].outerHTML.replace("<p>", "").replace("</p>", "").split("<br>")?.map((text) => {
             let split = text.split(":")
             if (split.length === 1) {
                 // This is a freaking random edge case. But what the heck, this whole project is a random edge case
@@ -305,6 +305,14 @@ export function getProductDetail(html: string) {
             return { label: label.trim(), value: value.trim() }
         }
         );
+
+        // remove all html tags from the parameters
+        parameters = parameters.map((parameter) => {
+            return {
+                label: parameter.label.replace(/<[^>]+>/gm, ''),
+                value: parameter.value.replace(/<[^>]+>/gm, ''),
+            }
+        })
 
         const ratingsSummaryElement = document.querySelector(".overall-rating2") as Element;
         const ratingsSummary = [...ratingsSummaryElement.querySelectorAll("p") as Iterable<Element>].map((p, index) => {
