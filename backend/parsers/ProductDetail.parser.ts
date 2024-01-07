@@ -125,18 +125,24 @@ function getParameters(document: HTMLDocument) {
 
     const pTags = [...descriptionElement!.querySelectorAll("p")] as Element[];
 
-    let parameters: {
-        label: string,
-        value: string,
-    }[] = []
     const spans = [...pTags[1].querySelectorAll("span")] as Element[];
+    console.log(spans.length);
     console.log({ length: spans.length });
     if (spans.length > 0) {
+        let parameters: {
+            label: string,
+            value: string,
+        }[] = []
         spans.forEach((span) => {
             const text = span.textContent?.trim() || "";
-            console.log(text);
+            console.log({ text });
             if (text) {
-                const split = text.split(":");
+                let split = text.split(":")
+                if (split.length === 1) {
+                    // This is a freaking random edge case. But what the heck, this whole project is a random edge case
+                    split = text.split("：")
+                }
+                console.log(split);
                 const label = split[0] || "";
                 const value = split[1] || "";
                 parameters.push({
@@ -145,8 +151,9 @@ function getParameters(document: HTMLDocument) {
                 })
             }
         })
+        return parameters
     } else {
-        parameters = pTags[1].outerHTML.replace("<p>", "").replace("</p>", "").split("<br>")?.map((text) => {
+        let parameters = pTags[1].outerHTML.replace("<p>", "").replace("</p>", "").split("<br>")?.map((text) => {
             let split = text.split(":")
             if (split.length === 1) {
                 // This is a freaking random edge case. But what the heck, this whole project is a random edge case
@@ -166,8 +173,8 @@ function getParameters(document: HTMLDocument) {
         })
         // remove all empty parameters
         parameters = parameters.filter((parameter) => parameter.label !== "" && parameter.value !== "");
+        return parameters
     }
-    return parameters
 }
 
 function getReviews(document: HTMLDocument) {
@@ -175,15 +182,12 @@ function getReviews(document: HTMLDocument) {
         const reviewTitleElement = reviewElement.querySelector(".review-title")
         const reviewContentElement = reviewElement.querySelector(".review-desc")
         const reviewAuthorElement = reviewElement.querySelector(".review-author>span")
-        const reviewRatingElement = reviewElement.querySelector(".review-star")?.querySelector(".active-bg")
         const reviewDateElement = reviewElement.querySelector(".review-date")
 
-        console.log(reviewRatingElement?.outerHTML);
-
+        const reviewRatingElement = reviewElement.querySelector(".review-star")?.querySelector(".active-bg")
         const ratingMatch = reviewRatingElement?.outerHTML.match(/\d+/gm);
         const rating = ratingMatch ? ratingMatch[0] : "00";
 
-        console.log({ rating });
 
 
         return {
