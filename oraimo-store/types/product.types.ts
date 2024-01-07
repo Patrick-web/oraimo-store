@@ -1,6 +1,7 @@
 export interface ProductItemType {
     id: string;
     link: string;
+    slug: string;
     name: string;
     image: string;
     currency: string;

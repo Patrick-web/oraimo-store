@@ -4,6 +4,7 @@ import { ProductItemType } from "@/types/product.types";
 import { FontAwesome } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { Image } from "react-native";
+import { ReviewStars } from "../ReviewStars";
 import Box from "../reusable/Box";
 import ThemedButton from "../reusable/Buttons";
 import ThemedText from "../reusable/ThemedText";
@@ -36,7 +37,7 @@ export default function ProductCard({ product }: { product: ProductItemType }) {
 			type="text"
 			onPress={() => {
 				router.push({
-					pathname: "/tabs/explore/product",
+					pathname: `/product/${product.slug}`,
 					params: {
 						preview: JSON.stringify(product),
 					},
@@ -54,12 +55,21 @@ export default function ProductCard({ product }: { product: ProductItemType }) {
 				<ThemedText size={"xs"} numberOfLines={2}>
 					{product.name}
 				</ThemedText>
-				<ThemedText size={"sm"} weight={"bold"}>
-					Ksh {product.price}
-				</ThemedText>
+				<Box direction="row" align="center" gap={10}>
+					<ThemedText size={"sm"} weight={"bold"}>
+						Ksh {product.discountedPrice}
+					</ThemedText>
+					<ThemedText
+						size={"xs"}
+						textDecorationLine="line-through"
+						textDecorationStyle="solid"
+					>
+						Ksh {product.price}
+					</ThemedText>
+				</Box>
 				{/* Rating starts */}
 				<Box direction="row" gap={5} align="center">
-					{generateStars()}
+					<ReviewStars rating={product.rating} />
 					<ThemedText size={"sm"}>({product.numberOfReviews})</ThemedText>
 				</Box>
 			</Box>

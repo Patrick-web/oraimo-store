@@ -19,4 +19,5 @@ export interface Collection {
 interface SubCollection {
 	link: string;
 	name: string;
+	slug: string;
 }

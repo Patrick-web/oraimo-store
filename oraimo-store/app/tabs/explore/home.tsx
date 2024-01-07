@@ -16,9 +16,11 @@ import { Collection, MainCollectionType } from "@/types/collection.types";
 import { ProductItemType } from "@/types/product.types";
 import { ReturnWrapper } from "@/types/util.types";
 import { useQuery } from "@tanstack/react-query";
-import { router } from "expo-router";
-import { Image, Pressable } from "react-native";
+import { Stack, router } from "expo-router";
+import { useRef } from "react";
+import { Animated, Pressable } from "react-native";
 import Carousel from "react-native-reanimated-carousel";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function Home() {
 	const homeQuery = useQuery<
@@ -39,14 +41,6 @@ export default function Home() {
 		refetchOnMount: true,
 	});
 
-	if (collectionsQuery.isLoading) {
-		return <HomeSkeleton />;
-	}
-
-	if (homeQuery.isError || collectionsQuery.isError) {
-		return <HomeError />;
-	}
-
 	const mainCollections = homeQuery.data?.data.mainCollections;
 
 	const collections = collectionsQuery.data?.data.map((collection) => ({
@@ -59,72 +53,131 @@ export default function Home() {
 
 	const products = homeQuery.data?.data.products;
 
+	const background = useThemeColor("background");
+	const textColor = useThemeColor("text");
+	const insets = useSafeAreaInsets();
+
+	const scrollY = useRef(new Animated.Value(0)).current;
+	const logoWidth = scrollY.interpolate({
+		inputRange: [0, 100],
+		outputRange: [160, 80],
+	});
+	const logoHeight = scrollY.interpolate({
+		inputRange: [0, 100],
+		outputRange: [60, 30],
+	});
+
+	if (collectionsQuery.isLoading) {
+		return <HomeSkeleton />;
+	}
+
+	if (homeQuery.isError || collectionsQuery.isError) {
+		return <HomeError />;
+	}
+
 	return (
-		<Page px={15} pb={130} gap={40} scrollable headerComponent={<HomeHeader />}>
-			<SearchBar />
-			{collections && (
-				<Box gap={10} wrap="wrap" direction="row">
-					{collections.map((collection) => (
-						<Pressable
-							style={{ width: "48%" }}
-							onPress={() => {
-								router.push({
-									pathname: "/tabs/explore/collection",
-									params: {
-										collection: JSON.stringify(collection),
-									},
-								});
-							}}
-							key={collection.name}
-						>
-							<MainCollectionCard {...collection} />
-						</Pressable>
-					))}
-				</Box>
-			)}
-
-			{products && (
-				<>
-					<Box gap={10}>
-						<ThemedText size="lg" weight="bold">
-							Featured
-						</ThemedText>
-						<Carousel
-							data={products.slice(0, 8)}
-							renderItem={({ item }) => (
-								<ProductCard key={item.name} product={item} />
-							)}
-							width={productImageSize + 20}
-							height={productImageSize + 100}
-							autoPlay
-							autoPlayInterval={2000}
-							style={{ width: sWidth - 30 }}
-							pagingEnabled
-							panGestureHandlerProps={{
-								activeOffsetX: [-10, 10],
-							}}
-						/>
-					</Box>
-
-					<Box gap={10}>
-						<ThemedText size="lg" weight="bold">
-							New Arrivals
-						</ThemedText>
+		<>
+			<Stack.Screen
+				options={{
+					header: () => (
 						<Box
-							wrap="wrap"
-							style={{ rowGap: 10 }}
-							direction="row"
 							block
-							justify="space-between"
+							align="center"
+							pt={insets.top + 10}
+							pb={5}
+							px={15}
+							color={background}
+							justify="center"
 						>
-							{products.slice(8).map((product) => (
-								<ProductCard key={product.id} product={product} />
-							))}
+							<Animated.Image
+								source={require("@/assets/images/logo.png")}
+								style={{
+									width: logoWidth,
+									height: logoHeight,
+								}}
+								resizeMode="contain"
+								tintColor={textColor}
+							/>
+							<Box block>
+								<SearchBar />
+							</Box>
 						</Box>
+					),
+				}}
+			/>
+
+			<Page
+				gap={40}
+				scrollable
+				onScroll={Animated.event(
+					[{ nativeEvent: { contentOffset: { y: scrollY } } }],
+					{ useNativeDriver: false }
+				)}
+			>
+				{collections && (
+					<Box gap={10} wrap="wrap" direction="row">
+						{collections.map((collection) => (
+							<Pressable
+								style={{ width: "48%" }}
+								onPress={() => {
+									router.push({
+										pathname: `/collections/${collection.slug}`,
+										params: {
+											collection: JSON.stringify(collection),
+										},
+									});
+								}}
+								key={collection.name}
+							>
+								<MainCollectionCard {...collection} />
+							</Pressable>
+						))}
 					</Box>
-				</>
-			)}
-		</Page>
+				)}
+
+				{products && (
+					<>
+						<Box gap={10}>
+							<ThemedText size="lg" weight="bold">
+								Featured
+							</ThemedText>
+							<Carousel
+								data={products.slice(0, 8)}
+								renderItem={({ item }) => (
+									<ProductCard key={item.name} product={item} />
+								)}
+								width={productImageSize + 20}
+								height={productImageSize + 100}
+								autoPlay
+								autoPlayInterval={2000}
+								style={{ width: sWidth - 30 }}
+								pagingEnabled
+								panGestureHandlerProps={{
+									activeOffsetX: [-10, 10],
+								}}
+							/>
+						</Box>
+
+						<Box gap={10}>
+							<ThemedText size="lg" weight="bold">
+								New Arrivals
+							</ThemedText>
+							<Box
+								wrap="wrap"
+								style={{ rowGap: 10 }}
+								direction="row"
+								block
+								justify="space-between"
+							>
+								{products.slice(8).map((product) => (
+									<ProductCard key={product.id} product={product} />
+								))}
+							</Box>
+						</Box>
+					</>
+				)}
+			</Page>
+		</>
 	);
 }
 
@@ -132,7 +185,6 @@ function HomeSkeleton() {
 	const background = useThemeColor("surface");
 	return (
 		<Page px={15} gap={20} scrollable>
-			<SearchBar />
 			<Box gap={10} wrap="wrap" direction="row">
 				<MainCollectionCardSkeleton />
 				<MainCollectionCardSkeleton />
@@ -180,20 +232,5 @@ function HomeError() {
 		<Page>
 			<ThemedText>Error</ThemedText>
 		</Page>
-	);
-}
-
-function HomeHeader() {
-	const background = useThemeColor("background");
-	const textColor = useThemeColor("text");
-	return (
-		<Box block align="center" py={10} color={background} justify="center">
-			<Image
-				source={require("@/assets/images/logo.png")}
-				style={{ width: 100, height: 50 }}
-				resizeMode="contain"
-				tintColor={textColor}
-			/>
-		</Box>
 	);
 }

@@ -1,8 +1,9 @@
-import Colors from "@/constants/Colors";
 import { sHeight } from "@/constants/Window";
+import { useThemeColor } from "@/hooks/theme.hook";
 import { AnimatePresence, MotiView } from "moti";
 import React, { ReactNode } from "react";
-import { Modal, Pressable, useColorScheme } from "react-native";
+import { Modal, Pressable } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Box, { BoxProps } from "./Box";
 import ThemedButton from "./Buttons";
 import ThemedText from "./ThemedText";
@@ -19,8 +20,8 @@ export default function ThemedModal({
 	hideCloseButton = false,
 	...modalProps
 }: ThemedModalProps) {
-	const colorScheme = useColorScheme();
-	const theme = Colors[colorScheme ?? "light"];
+	const background = useThemeColor("background");
+	const insets = useSafeAreaInsets();
 
 	const CloseButton = () => (
 		<Pressable style={{ width: "100%", flex: 1 }} onPress={close}></Pressable>
@@ -68,7 +69,7 @@ export default function ThemedModal({
 								style={{ width: "100%", alignItems: "center" }}
 							>
 								<Box
-									color={theme.background}
+									color={background}
 									pt={leftChild || title ? 15 : 0}
 									radiusBottom={
 										position === "top" || position === "center" ? 30 : 0
@@ -78,6 +79,7 @@ export default function ThemedModal({
 									}
 									block
 									position="relative"
+									style={{ maxHeight: sHeight - insets.top }}
 								>
 									{(leftChild || title) && (
 										<Box
@@ -101,7 +103,7 @@ export default function ThemedModal({
 												name: "x",
 											}}
 											onPress={() => close && close()}
-											size="xs"
+											size="sm"
 											type="text"
 											style={{
 												position: "absolute",
@@ -112,7 +114,7 @@ export default function ThemedModal({
 										/>
 									)}
 									<Box
-										style={{ maxHeight: sHeight - 120 }}
+										style={{ maxHeight: sHeight - insets.top }}
 										pa={20}
 										{...containerProps}
 									>

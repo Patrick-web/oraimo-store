@@ -1,13 +1,15 @@
 import { sWidth } from "@/constants/Window";
 import { useThemeColor } from "@/hooks/theme.hook";
-import { router, usePathname } from "expo-router";
+import { usePathname } from "expo-router";
 import React, { ReactNode, forwardRef, useImperativeHandle } from "react";
-import { ScrollView } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+	Animated,
+	NativeScrollEvent,
+	NativeSyntheticEvent,
+} from "react-native";
+import { ScrollView } from "react-native-gesture-handler";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Box, { BoxProps } from "./Box";
-import ThemedButton from "./Buttons";
-import ThemedIcon from "./ThemedIcon";
-import ThemedText from "./ThemedText";
 
 const Page = forwardRef(
 	(
@@ -17,6 +19,7 @@ const Page = forwardRef(
 			header,
 			headerComponent,
 			disableHeader = false,
+			onScroll,
 			...props
 		}: PageProps,
 		ref
@@ -41,54 +44,10 @@ const Page = forwardRef(
 		let splitPath = path.split("/");
 		splitPath.shift();
 
+		const insets = useSafeAreaInsets();
+
 		return (
-			<SafeAreaView>
-				{disableHeader ? (
-					<Box color={backgroundColor} />
-				) : (
-					<Box
-						block
-						justify="space-between"
-						align="center"
-						color={backgroundColor}
-					>
-						{headerComponent ? (
-							headerComponent
-						) : (
-							<Box
-								direction="row"
-								align="center"
-								justify="space-between"
-								gap={10}
-								block
-								px={15}
-								py={15}
-							>
-								<ThemedButton
-									type="text"
-									size="sm"
-									onPress={() => {
-										router.back();
-									}}
-								>
-									<ThemedIcon name="chevron-left" size={25} />
-								</ThemedButton>
-								<ThemedText size="lg" weight="bold">
-									{header?.title}
-								</ThemedText>
-								<ThemedButton
-									type="text"
-									size="sm"
-									onPress={() => {
-										router.back();
-									}}
-								>
-									<ThemedIcon name="search" size={25} />
-								</ThemedButton>
-							</Box>
-						)}
-					</Box>
-				)}
+			<>
 				{scrollable ? (
 					<Box
 						color={backgroundColor}
@@ -96,15 +55,20 @@ const Page = forwardRef(
 						width={sWidth}
 						px={15}
 						pb={header ? 120 : 30}
+						pt={5}
 						{...props}
 					>
-						<ScrollView
+						<Animated.ScrollView
 							contentContainerStyle={{
 								gap: props.gap,
 							}}
+							ref={scrollRef}
+							onScroll={onScroll}
+							// throttle scroll events
+							scrollEventThrottle={24}
 						>
 							{children}
-						</ScrollView>
+						</Animated.ScrollView>
 					</Box>
 				) : (
 					<Box
@@ -118,21 +82,23 @@ const Page = forwardRef(
 						{children}
 					</Box>
 				)}
-			</SafeAreaView>
+			</>
 		);
 	}
 );
 
 export default Page;
 
+// <Page
+// 		gap={40}
+// 		scrollable
+// 		onScroll={Animated.event(
+// 			[{ nativeEvent: { contentOffset: { y: scrollY } } }],
+// 			{ useNativeDriver: false }
+// 		)}
+// 	></Page>
 interface PageProps extends BoxProps {
 	children: ReactNode;
 	scrollable?: boolean;
-	headerComponent?: ReactNode;
-	header?: {
-		title: string;
-		disableBackButton?: boolean;
-		rightComponent?: ReactNode;
-	} | null;
-	disableHeader?: boolean;
+	onScroll?: (e: NativeSyntheticEvent<NativeScrollEvent>) => void;
 }

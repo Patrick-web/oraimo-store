@@ -10,6 +10,7 @@ export default function SearchBar(
 			leftSlot={<ThemedIcon name="search" />}
 			placeholder="Search"
 			{...props}
+			size="sm"
 		/>
 	);
 }
