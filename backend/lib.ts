@@ -105,7 +105,7 @@ export async function fetchProductReviews({ productId }: { productId: string }) 
 
 export async function fetchSearchProducts({ query }: { query: string }) {
     try {
-        const resp = await fetch(`https://ke.oraimo.com/catalogsearch/result/?q=${query}`, {
+        const resp = await fetch(`https://ke.oraimo.com/search?keyword=${query}`, {
             "method": "GET",
         });
         const html = await resp.text()
