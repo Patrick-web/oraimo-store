@@ -1,4 +1,5 @@
-import { getCollectionsFromHtml, getMainCollections, getProductDetail, getProductReviews, getProductsFromHtml } from "./parsers.ts";
+import { getCollectionsFromHtml, getMainCollections, getProductReviews, getProductsFromHtml } from "./parsers.ts";
+import getProductDetail from "./parsers/ProductDetail.parser.ts";
 
 export async function fetchHomePage() {
     try {
