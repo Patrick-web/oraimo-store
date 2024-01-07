@@ -297,28 +297,50 @@ export function getProductDetail(html: string) {
 
         productDescription = productDescription.filter((description) => description.type === "text" ? description.text?.trim() === "" ? false : true : true);
 
-        let parameters = pTags[1].outerHTML.replace("<p>", "").replace("</p>", "").split("<br>")?.map((text) => {
-            let split = text.split(":")
-            if (split.length === 1) {
-                // This is a freaking random edge case. But what the heck, this whole project is a random edge case
-                split = text.split("：")
+        console.log(pTags[1].textContent);
+        let parameters: {
+            label: string,
+            value: string,
+        }[] = []
+        const spans = [...pTags[1].querySelectorAll("span")] as Element[];
+        console.log({ length: spans.length });
+        if (spans.length > 0) {
+            spans.forEach((span) => {
+                const text = span.textContent?.trim() || "";
+                console.log(text);
+                if (text) {
+                    const split = text.split(":");
+                    const label = split[0] || "";
+                    const value = split[1] || "";
+                    parameters.push({
+                        label: label.trim(),
+                        value: value.trim(),
+                    })
+                }
+            })
+        } else {
+            parameters = pTags[1].outerHTML.replace("<p>", "").replace("</p>", "").split("<br>")?.map((text) => {
+                let split = text.split(":")
+                if (split.length === 1) {
+                    // This is a freaking random edge case. But what the heck, this whole project is a random edge case
+                    split = text.split("：")
+                }
+                const label = split[0] || ""
+                const value = split[1] || ""
+                return { label: label.trim(), value: value.trim() }
             }
-            const label = split[0] || ""
-            const value = split[1] || ""
-            return { label: label.trim(), value: value.trim() }
+            );
+            // remove all html tags from the parameters
+            parameters = parameters.map((parameter) => {
+                return {
+                    label: parameter.label.replace(/<[^>]+>/gm, ''),
+                    value: parameter.value.replace(/<[^>]+>/gm, ''),
+                }
+            })
+            // remove all empty parameters
+            parameters = parameters.filter((parameter) => parameter.label !== "" && parameter.value !== "");
         }
-        );
 
-        // remove all html tags from the parameters
-        parameters = parameters.map((parameter) => {
-            return {
-                label: parameter.label.replace(/<[^>]+>/gm, ''),
-                value: parameter.value.replace(/<[^>]+>/gm, ''),
-            }
-        })
-
-        // remove all empty parameters
-        parameters = parameters.filter((parameter) => parameter.label !== "" && parameter.value !== "");
 
         const ratingsSummaryElement = document.querySelector(".overall-rating2") as Element;
         const ratingsSummary = [...ratingsSummaryElement.querySelectorAll("p") as Iterable<Element>].map((p, index) => {
