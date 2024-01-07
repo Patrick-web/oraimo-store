@@ -29,7 +29,7 @@ export function ReviewStars({
 	}
 
 	return (
-		<Box gap={10} direction="row">
+		<Box gap={5} direction="row">
 			{stars}
 		</Box>
 	);

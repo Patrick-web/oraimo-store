@@ -17,7 +17,7 @@ import { ProductItemType } from "@/types/product.types";
 import { ReturnWrapper } from "@/types/util.types";
 import { useQuery } from "@tanstack/react-query";
 import { Stack, router } from "expo-router";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { Animated, Pressable } from "react-native";
 import Carousel from "react-native-reanimated-carousel";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -57,6 +57,8 @@ export default function Home() {
 	const textColor = useThemeColor("text");
 	const insets = useSafeAreaInsets();
 
+	const [searchQuery, setSearchQuery] = useState("");
+
 	const scrollY = useRef(new Animated.Value(0)).current;
 	const logoWidth = scrollY.interpolate({
 		inputRange: [0, 100],
@@ -67,7 +69,7 @@ export default function Home() {
 		outputRange: [60, 30],
 	});
 
-	if (collectionsQuery.isLoading) {
+	if (collectionsQuery.isLoading || !collections || !products) {
 		return <HomeSkeleton />;
 	}
 
@@ -99,7 +101,18 @@ export default function Home() {
 								tintColor={textColor}
 							/>
 							<Box block>
-								<SearchBar />
+								<SearchBar
+									placeholder="Search"
+									onChangeText={setSearchQuery}
+									onSubmitEditing={() => {
+										router.push({
+											pathname: "/search",
+											params: {
+												query: searchQuery,
+											},
+										});
+									}}
+								/>
 							</Box>
 						</Box>
 					),
@@ -182,48 +195,82 @@ export default function Home() {
 }
 
 function HomeSkeleton() {
-	const background = useThemeColor("surface");
+	const surface = useThemeColor("surface");
+	const insets = useSafeAreaInsets();
+	const textColor = useThemeColor("text");
+	const background = useThemeColor("background");
+
 	return (
-		<Page px={15} gap={20} scrollable>
-			<Box gap={10} wrap="wrap" direction="row">
-				<MainCollectionCardSkeleton />
-				<MainCollectionCardSkeleton />
-				<MainCollectionCardSkeleton />
-				<MainCollectionCardSkeleton />
-			</Box>
-
-			<Box gap={10}>
-				<Box height={20} width={100} radius={5} color={background} />
-				<Box
-					wrap="wrap"
-					style={{ rowGap: 10 }}
-					direction="row"
-					block
-					justify="space-between"
-				>
-					<ProductCardSkeleton />
-					<ProductCardSkeleton />
-					<ProductCardSkeleton />
-					<ProductCardSkeleton />
+		<>
+			<Stack.Screen
+				options={{
+					header: () => (
+						<Box
+							block
+							align="center"
+							pt={insets.top + 10}
+							pb={5}
+							px={15}
+							color={background}
+							justify="center"
+						>
+							<Animated.Image
+								source={require("@/assets/images/logo.png")}
+								style={{
+									width: 160,
+									height: 60,
+								}}
+								resizeMode="contain"
+								tintColor={textColor}
+							/>
+							<Box block>
+								<SearchBar />
+							</Box>
+						</Box>
+					),
+				}}
+			/>
+			<Page px={15} gap={20} scrollable>
+				<Box gap={10} wrap="wrap" direction="row">
+					<MainCollectionCardSkeleton />
+					<MainCollectionCardSkeleton />
+					<MainCollectionCardSkeleton />
+					<MainCollectionCardSkeleton />
 				</Box>
-			</Box>
 
-			<Box gap={10}>
-				<Box height={20} width={100} radius={5} color={background} />
-				<Box
-					wrap="wrap"
-					style={{ rowGap: 10 }}
-					direction="row"
-					block
-					justify="space-between"
-				>
-					<ProductCardSkeleton />
-					<ProductCardSkeleton />
-					<ProductCardSkeleton />
-					<ProductCardSkeleton />
+				<Box gap={10}>
+					<Box height={20} width={100} radius={5} color={surface} />
+					<Box
+						wrap="wrap"
+						style={{ rowGap: 10 }}
+						direction="row"
+						block
+						justify="space-between"
+					>
+						<ProductCardSkeleton />
+						<ProductCardSkeleton />
+						<ProductCardSkeleton />
+						<ProductCardSkeleton />
+					</Box>
 				</Box>
-			</Box>
-		</Page>
+
+				<Box gap={10}>
+					<Box height={20} width={100} radius={5} color={surface} />
+					<Box
+						wrap="wrap"
+						style={{ rowGap: 10 }}
+						direction="row"
+						block
+						justify="space-between"
+					>
+						<ProductCardSkeleton />
+						<ProductCardSkeleton />
+						<ProductCardSkeleton />
+						<ProductCardSkeleton />
+					</Box>
+				</Box>
+			</Page>
+		</>
 	);
 }
 

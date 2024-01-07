@@ -42,7 +42,6 @@ export default function CollectionPage() {
 	});
 
 	const products = collectionProductsQuery.data?.data || [];
-	console.log({ products });
 
 	const surface = useThemeColor("surface");
 	const background = useThemeColor("background");
@@ -135,14 +134,14 @@ export default function CollectionPage() {
 												router.back();
 											}}
 										>
-											<ThemedIcon name="arrow-left" size={25} color="white" />
+											<ThemedIcon name="chevron-left" size={25} color="white" />
 										</ThemedButton>
 
 										<ThemedButton
 											type="text"
 											size="sm"
 											onPress={() => {
-												router.back();
+												router.push("/search");
 											}}
 										>
 											<ThemedIcon name="search" size={25} color="white" />
@@ -210,7 +209,6 @@ export default function CollectionPage() {
 				<ProductsContainer
 					products={products}
 					loading={collectionProductsQuery.isLoading}
-					numberOfSkeletons={4}
 				/>
 			</Page>
 		</>

@@ -24,7 +24,7 @@ const ThemedButton = (props: ThemedButtonProps) => {
 		label,
 		loading = false,
 		onPress,
-		type = "primary",
+		type = "text",
 		disabled = false,
 		wrapperProps,
 		radius = 40,
@@ -72,6 +72,7 @@ const ThemedButton = (props: ThemedButtonProps) => {
 	};
 
 	const textColor = useThemeColor("text");
+	const backgroundColor = useThemeColor("background");
 
 	const labelColor = () => {
 		if (labelProps?.color) return labelProps.color;
@@ -80,7 +81,7 @@ const ThemedButton = (props: ThemedButtonProps) => {
 			return textColor;
 		}
 		if (type === "primary") {
-			return "white";
+			return textColor;
 		}
 		if (type === "primary-outlined") {
 			return theme.primary;

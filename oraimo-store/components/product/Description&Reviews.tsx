@@ -2,6 +2,7 @@ import { useThemeColor } from "@/hooks/theme.hook";
 import { FullProduct } from "@/types/product.types";
 import { animateLayout } from "@/utils/animation.util";
 import React, { useState } from "react";
+import * as Animatable from "react-native-animatable";
 import Box from "../reusable/Box";
 import ThemedButton from "../reusable/Buttons";
 import DescriptionItem from "./DescriptionItem";
@@ -18,7 +19,17 @@ export default function DescriptionAndReviews({
 		"description"
 	);
 
+	const [descAnimation, setDescAnimation] = useState<string>();
+	const [reviewsAnimation, setReviewsAnimation] = useState<string>();
+
 	function switchTab(tab: "description" | "reviews") {
+		if (tab === "description") {
+			setDescAnimation("slideInLeft");
+			setReviewsAnimation("slideOutRight");
+		} else {
+			setDescAnimation("slideOutLeft");
+			setReviewsAnimation("slideInRight");
+		}
 		animateLayout();
 		setActiveTab(tab);
 	}
@@ -58,27 +69,31 @@ export default function DescriptionAndReviews({
 					width={110}
 					color={color}
 					style={{
-						transform: [{ translateX: activeTab === "description" ? 0 : 112 }],
+						marginLeft: activeTab === "description" ? 0 : 112,
 					}}
 				/>
 			</Box>
 			{activeTab === "description" && (
-				<Box gap={10} width={activeTab === "description" ? "100%" : "0%"}>
-					{description.map((desc, index) => (
-						<DescriptionItem key={index} desc={desc} />
-					))}
-				</Box>
+				<Animatable.View animation={descAnimation}>
+					<Box gap={10} width={activeTab === "description" ? "100%" : "0%"}>
+						{description.map((desc, index) => (
+							<DescriptionItem key={index} desc={desc} />
+						))}
+					</Box>
+				</Animatable.View>
 			)}
 			{activeTab === "reviews" && (
-				<Box
-					gap={20}
-					width={activeTab === "reviews" ? "100%" : "0%"}
-					align="center"
-				>
-					{reviews.map((review) => (
-						<ReviewCard key={review.user} review={review} />
-					))}
-				</Box>
+				<Animatable.View animation={reviewsAnimation}>
+					<Box
+						gap={20}
+						width={activeTab === "reviews" ? "100%" : "0%"}
+						align="center"
+					>
+						{reviews.map((review) => (
+							<ReviewCard key={review.user} review={review} />
+						))}
+					</Box>
+				</Animatable.View>
 			)}
 		</Box>
 	);

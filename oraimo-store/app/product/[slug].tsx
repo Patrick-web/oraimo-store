@@ -14,8 +14,8 @@ import { ReturnWrapper } from "@/types/util.types";
 import { useQuery } from "@tanstack/react-query";
 import { Image } from "expo-image";
 import { Stack, router, useLocalSearchParams } from "expo-router";
-import React, { useRef, useState } from "react";
-import { Animated, ScrollView } from "react-native";
+import React, { useState } from "react";
+import { ScrollView } from "react-native";
 import Carousel from "react-native-reanimated-carousel";
 
 const imageSize = sWidth - 100;
@@ -42,29 +42,16 @@ export default function Product() {
 	const background = useThemeColor("background");
 	const color = useThemeColor("text");
 
-	const scrollX = React.useRef(new Animated.Value(0)).current;
-	const lineIndicatorTranslateX = scrollX.interpolate({
-		inputRange: [0, sWidth],
-		outputRange: [0, 120],
-	});
-	const descriptionOpacity = scrollX.interpolate({
-		inputRange: [0, sWidth],
-		outputRange: [1.0, 0.5],
-	});
-	const reviewOpacity = scrollX.interpolate({
-		inputRange: [0, sWidth],
-		outputRange: [0.5, 1.0],
-	});
-	const descriptionReviewScrollViewRef = useRef<ScrollView>(null);
-
 	const [showImagesViewer, setShowImagesViewer] = useState(false);
 	const [imageViewerShow, setImageViewerShow] = useState(0);
+
+	const primaryColor = useThemeColor("primary");
 
 	return (
 		<>
 			<Stack.Screen
 				options={{
-					title: "Product Details",
+					title: "",
 					headerStyle: {
 						backgroundColor: background,
 					},
@@ -78,12 +65,12 @@ export default function Product() {
 							}}
 							type="text"
 						>
-							<ThemedIcon name="shopping-cart" size={25} />
+							<ThemedIcon name="shopping-cart" size={22} />
 						</ThemedButton>
 					),
 				}}
 			/>
-			<Page scrollable>
+			<Page scrollable position="relative" pb={90}>
 				{isError && <ThemedText>{error.message}</ThemedText>}
 				{isLoading && preview && <ProductPreview product={preview} />}
 				{product && (
@@ -128,7 +115,7 @@ export default function Product() {
 								</ThemedText>
 								<Box direction="row" gap={10} align="center">
 									{product.discountedPrice && (
-										<ThemedText weight="bold" size={"xl"} color={"#03B068"}>
+										<ThemedText weight="bold" size={"xl"} color={primaryColor}>
 											Ksh {product.discountedPrice}
 										</ThemedText>
 									)}
@@ -141,7 +128,7 @@ export default function Product() {
 										Ksh {product.price}
 									</ThemedText>
 								</Box>
-								<Box direction="row" gap={5} align="center">
+								<Box direction="row" gap={20} align="center">
 									<ReviewStars
 										size={18}
 										rating={
@@ -149,8 +136,8 @@ export default function Product() {
 										}
 									/>
 									<ThemedText size={"sm"}>
-										({product.numberOfReviews}) Rating
-										{product.numberOfReviews.length > 1 ? "s" : ""}
+										({product.numberOfReviews} Rating
+										{product.numberOfReviews.length > 1 ? "s" : ""})
 									</ThemedText>
 								</Box>
 							</Box>
@@ -205,6 +192,30 @@ export default function Product() {
 					</Box>
 				)}
 			</Page>
+			<Box
+				position="absolute"
+				style={{
+					bottom: 0,
+					left: 0,
+					right: 0,
+					zIndex: 100,
+				}}
+				direction="row"
+				gap={20}
+				pa={20}
+				color={background}
+			>
+				<ThemedButton label={"Add To Cart"} size="sm" flex={1} type="surface" />
+				<ThemedButton
+					label={"Buy Now"}
+					size="sm"
+					flex={1}
+					type="primary"
+					labelProps={{
+						weight: "bold",
+					}}
+				/>
+			</Box>
 			<ImageViewer
 				images={product?.images || []}
 				visible={showImagesViewer}
@@ -249,7 +260,7 @@ function Parameter({ parameter }: { parameter: FullProduct["parameters"][0] }) {
 	const textColor = useThemeColor("text");
 	const surface = useThemeColor("surface");
 	return (
-		<Box>
+		<Box width={"48%"}>
 			<ThemedText size={"sm"}>{parameter.value}</ThemedText>
 			<ThemedText size={"xs"} style={{ opacity: 0.5 }}>
 				{parameter.label}

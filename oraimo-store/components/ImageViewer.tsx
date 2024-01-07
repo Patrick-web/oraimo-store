@@ -1,6 +1,6 @@
 import { sWidth } from "@/constants/Window";
 import { Image } from "expo-image";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ScrollView } from "react-native";
 import { gestureHandlerRootHOC } from "react-native-gesture-handler";
 import { Zoom } from "react-native-reanimated-zoom";
@@ -45,6 +45,15 @@ const Viewer = gestureHandlerRootHOC(
 		const [selectedImageIndex, setSelectedImageIndex] =
 			useState(defaultSelectedIndex);
 
+		const scrollRef = React.useRef<ScrollView>(null);
+
+		useEffect(() => {
+			scrollRef.current?.scrollTo({
+				x: selectedImageIndex * imagesHeight,
+				animated: true,
+			});
+		}, [selectedImageIndex]);
+
 		return (
 			<Box align="center" justify="space-between" height={"100%"}>
 				<Box height={mainImageHeight}>
@@ -66,7 +75,7 @@ const Viewer = gestureHandlerRootHOC(
 					))}
 				</Box>
 				<Box height={imagesHeight} block>
-					<ScrollView horizontal pagingEnabled snapToStart>
+					<ScrollView horizontal pagingEnabled snapToStart ref={scrollRef}>
 						{images.length > 1 && (
 							<Box direction="row" gap={10}>
 								{images.map((image, index) => (
@@ -82,7 +91,6 @@ const Viewer = gestureHandlerRootHOC(
 											style={{
 												width: imagesHeight,
 												height: imagesHeight,
-												borderRadius: selectedImageIndex === index ? 15 : 0,
 											}}
 											contentFit="contain"
 										/>
