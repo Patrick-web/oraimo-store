@@ -1,5 +1,42 @@
 import { assert } from "https://deno.land/std@0.200.0/assert/assert.ts";
 import { DOMParser, Element, HTMLDocument } from "https://deno.land/x/deno_dom@v0.1.43/deno-dom-wasm.ts";
+import z from "https://deno.land/x/zod@v3.22.4/index.ts";
+
+const ProductDetailsSchema = z.object({
+    name: z.string(),
+    price: z.string(),
+    discountedPrice: z.string().optional(),
+    highlightFeatures: z.array(z.object({
+        image: z.string().url(),
+        label: z.string(),
+    })),
+    images: z.array(z.string().url()),
+    parameters: z.array(z.object({
+        label: z.string(),
+        value: z.string(),
+    })),
+    // features is an array of objects with type image or text and src or text. If type is image, src is required. If type is text, text is required
+    description: z.array(z.object({
+        type: z.enum(["image", "text"]),
+        src: z.string().url().optional(),
+        text: z.string().optional(),
+        weight: z.string().optional(),
+    })),
+    numberOfReviews: z.string(),
+    overallRating: z.string(),
+    ratingsSummary: z.array(z.object({
+        rating: z.string(),
+        numberOfReviews: z.string(),
+    })),
+    firstReviews: z.array(z.object({
+        title: z.string(),
+        content: z.string(),
+        user: z.string(),
+        rating: z.string(),
+        date: z.string(),
+    })),
+    isSoldOut: z.boolean(),
+})
 
 export default function getProductDetail(html: string) {
     try {
@@ -138,14 +175,22 @@ function getReviews(document: HTMLDocument) {
         const reviewTitleElement = reviewElement.querySelector(".review-title")
         const reviewContentElement = reviewElement.querySelector(".review-desc")
         const reviewAuthorElement = reviewElement.querySelector(".review-author>span")
-        const reviewRatingElement = reviewElement.querySelector(".review-star>span")
+        const reviewRatingElement = reviewElement.querySelector(".review-star")?.querySelector(".active-bg")
         const reviewDateElement = reviewElement.querySelector(".review-date")
+
+        console.log(reviewRatingElement?.outerHTML);
+
+        const ratingMatch = reviewRatingElement?.outerHTML.match(/\d+/gm);
+        const rating = ratingMatch ? ratingMatch[0] : "00";
+
+        console.log({ rating });
+
 
         return {
             title: reviewTitleElement?.textContent?.trim() || "",
             content: reviewContentElement?.textContent?.trim() || "",
             user: reviewAuthorElement?.textContent?.trim() || "",
-            rating: reviewRatingElement?.getAttribute("title") || "0.0",
+            rating: Number(rating) * 5 / 100 || 0.0,
             date: reviewDateElement?.textContent?.trim() || "",
         }
     });
