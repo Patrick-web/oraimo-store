@@ -1,8 +1,8 @@
 import { Application, Router } from "https://deno.land/x/oak@v12.6.1/mod.ts";
 import { UserResponse } from "../types/Account.types.ts";
-import { MiniListResponse, QuantityResponse } from "../types/Cart.types.ts";
+import { CartResponse, MiniListResponse, QuantityResponse } from "../types/Cart.types.ts";
 import { OrderResponse } from "../types/Order.types.ts";
-import { WishResponse } from "../types/Wish.types.ts";
+import { AddToWishListResponse, WishResponse } from "../types/Wish.types.ts";
 import {
   fetchCollectionProducts,
   fetchCollections,
@@ -126,7 +126,27 @@ router
       };
       return;
     }
-  }).get("/api/cart/qty", async (context) => {
+  })
+  .get("/api/cart", async (context) => {
+    const bearerToken = context.request.headers.get("Authorization")!;
+
+    try {
+      const resp = await fetch("https://ke.oraimo.com/api/cart", {
+        headers: {
+          "Authorization": bearerToken
+        }
+      })
+      const data = await resp.json() as CartResponse;
+      context.response.body = { data: data.data, error: null };
+    } catch (error) {
+      context.response.status = 401;
+      context.response.body = {
+        error: "Invalid bearer token",
+      };
+      return;
+    }
+  })
+  .get("/api/cart/qty", async (context) => {
     const bearerToken = context.request.headers.get("Authorization")!;
 
     try {
@@ -192,19 +212,53 @@ router
       };
       return;
     }
-  })
-  ;
+  }).post("/api/wish", async (context) => {
+    const bearerToken = context.request.headers.get("Authorization")!;
+    const data = context.request.body({ type: "json" });
+    console.log({ data });
+    const { productId } = await data.value;
+
+    if (!productId) {
+      context.response.status = 401;
+      context.response.body = {
+        error: "Please provide the product productId",
+      };
+      return;
+    }
+
+    try {
+      const resp = await fetch("https://ke.oraimo.com/api/wish", {
+        method: "POST",
+        headers: {
+          "Authorization": bearerToken,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          product_id: productId
+        })
+      })
+      const data = await resp.json() as AddToWishListResponse;
+      context.response.body = { data: data.data, error: null };
+    } catch (error) {
+      context.response.status = 401;
+      context.response.body = {
+        error: "Invalid bearer token",
+      };
+      return;
+    }
+  });
 
 const app = new Application();
-app.use(router.routes());
-app.use(router.allowedMethods());
-// log all requests
+
+app.use(authMiddleware)
+
 app.use(async (context, next) => {
   await next();
   const rt = context.response.headers.get("X-Response-Time");
   console.log(`${context.request.method} ${context.request.url} - ${rt}`);
 });
-app.use(authMiddleware)
+app.use(router.routes());
+app.use(router.allowedMethods());
 
 const PORT = 8000;
 
