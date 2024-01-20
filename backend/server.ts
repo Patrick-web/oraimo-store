@@ -1,4 +1,8 @@
 import { Application, Router } from "https://deno.land/x/oak@v12.6.1/mod.ts";
+import { UserResponse } from "../types/Account.types.ts";
+import { MiniListResponse, QuantityResponse } from "../types/Cart.types.ts";
+import { OrderResponse } from "../types/Order.types.ts";
+import { WishResponse } from "../types/Wish.types.ts";
 import {
   fetchCollectionProducts,
   fetchCollections,
@@ -8,6 +12,7 @@ import {
   fetchProductReviews,
   fetchSearchProducts,
 } from "./lib.ts";
+import { authMiddleware } from "./middleware/auth.middleware.ts";
 
 const router = new Router();
 router
@@ -84,7 +89,111 @@ router
     const { data, error } = await fetchSearchProducts({ query });
 
     context.response.body = { data, error };
-  });
+  })
+  .get("/api/user", async (context) => {
+    const bearerToken = context.request.headers.get("Authorization")!;
+    try {
+      const resp = await fetch("https://ke.oraimo.com/api/user", {
+        headers: {
+          "Authorization": bearerToken
+        }
+      })
+      const data = await resp.json() as UserResponse;
+      context.response.body = { data: data.data, error: null };
+    } catch (error) {
+      context.response.status = 401;
+      context.response.body = {
+        error: "Invalid bearer token",
+      };
+      return;
+    }
+  })
+  .get("/api/cart/mini-list", async (context) => {
+    const bearerToken = context.request.headers.get("Authorization")!;
+
+    try {
+      const resp = await fetch("https://ke.oraimo.com/api/cart/mini-list", {
+        headers: {
+          "Authorization": bearerToken
+        }
+      })
+      const data = await resp.json() as MiniListResponse;
+      context.response.body = { data: data.data, error: null };
+    } catch (error) {
+      context.response.status = 401;
+      context.response.body = {
+        error: "Invalid bearer token",
+      };
+      return;
+    }
+  }).get("/api/cart/qty", async (context) => {
+    const bearerToken = context.request.headers.get("Authorization")!;
+
+    try {
+      const resp = await fetch("https://ke.oraimo.com/api/cart/qty", {
+        headers: {
+          "Authorization": bearerToken
+        }
+      })
+      const data = await resp.json() as QuantityResponse;
+      context.response.body = { data: data.data, error: null };
+    } catch (error) {
+      context.response.status = 401;
+      context.response.body = {
+        error: "Invalid bearer token",
+      };
+      return;
+    }
+  }).get("/api/order/:type", async (context) => {
+    const bearerToken = context.request.headers.get("Authorization")!;
+
+    const OrderTypes = new Map<string, string>([
+      ["all", ""],
+      ["prepaid", "1"],
+      ["tobereceived", "2"],
+      ["completed", "3"],
+      ["canceled", "4"],
+    ]);
+
+    const type = context?.params?.type;
+    let type_id = OrderTypes.get(type || "") || "";
+
+    try {
+      const resp = await fetch(`https://ke.oraimo.com/api/order?${type_id}`, {
+        headers: {
+          "Authorization": bearerToken
+        }
+      })
+      const data = await resp.json() as OrderResponse;
+      context.response.body = { data: data.data, error: null };
+    } catch (error) {
+      context.response.status = 401;
+      context.response.body = {
+        error: "Invalid bearer token",
+      };
+      return;
+    }
+  })
+  .get("/api/wish", async (context) => {
+    const bearerToken = context.request.headers.get("Authorization")!;
+
+    try {
+      const resp = await fetch("https://ke.oraimo.com/api/wish", {
+        headers: {
+          "Authorization": bearerToken
+        }
+      })
+      const data = await resp.json() as WishResponse;
+      context.response.body = { data: data.data, error: null };
+    } catch (error) {
+      context.response.status = 401;
+      context.response.body = {
+        error: "Invalid bearer token",
+      };
+      return;
+    }
+  })
+  ;
 
 const app = new Application();
 app.use(router.routes());
@@ -95,6 +204,7 @@ app.use(async (context, next) => {
   const rt = context.response.headers.get("X-Response-Time");
   console.log(`${context.request.method} ${context.request.url} - ${rt}`);
 });
+app.use(authMiddleware)
 
 const PORT = 8000;
 
