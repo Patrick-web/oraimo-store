@@ -24,11 +24,15 @@ import { Stack, router } from "expo-router";
 import { useRef, useState } from "react";
 import { Animated, Pressable } from "react-native";
 import RAnimated, {
+	interpolate,
+	useAnimatedRef,
 	useAnimatedStyle,
+	useScrollViewOffset,
 	useSharedValue,
 	withTiming,
 } from "react-native-reanimated";
 import Carousel from "react-native-reanimated-carousel";
+import { AnimatedScrollView } from "react-native-reanimated/lib/typescript/reanimated2/component/ScrollView";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function Home() {
@@ -82,10 +86,20 @@ export default function Home() {
 		return <HomeError />;
 	}
 
+	const scrollViewRef = useAnimatedRef<AnimatedScrollView>();
+	const scrollOffset = useScrollViewOffset(scrollViewRef);
+
+	const logoStyle = useAnimatedStyle(() => {
+		return {
+			width: interpolate(scrollOffset.value, [0, 100], [160, 80]),
+			height: interpolate(scrollOffset.value, [0, 100], [60, 30]),
+		};
+	});
+
 	const expandCollections = useSharedValue(false);
 	const otherCollectionsStyle = useAnimatedStyle(() => {
 		return {
-			maxHeight: withTiming(expandCollections.value ? 300 : 0),
+			maxHeight: withTiming(expandCollections.value ? "100%" : "0%"),
 		};
 	});
 	const expanderChevronStyle = useAnimatedStyle(() => {
@@ -108,12 +122,9 @@ export default function Home() {
 							color={background}
 							justify="center"
 						>
-							<Animated.Image
+							<RAnimated.Image
 								source={require("@/assets/images/logo.png")}
-								style={{
-									width: logoWidth,
-									height: logoHeight,
-								}}
+								style={[logoStyle]}
 								resizeMode="contain"
 								tintColor={textColor}
 							/>
@@ -136,114 +147,108 @@ export default function Home() {
 				}}
 			/>
 
-			<Page
-				gap={40}
-				scrollable
-				onScroll={Animated.event(
-					[{ nativeEvent: { contentOffset: { y: scrollY } } }],
-					{ useNativeDriver: false }
-				)}
-				pb={120}
-			>
-				<Box gap={10}>
-					{mainCollections && (
-						<Box gap={10} wrap="wrap" direction="row">
-							{mainCollections.map((collection) => (
-								<Pressable
-									style={{ width: "48%" }}
-									onPress={() => {
-										router.push({
-											pathname: `/collections/${collection.name}`,
-											params: {
-												collection: JSON.stringify(collection),
-											},
-										});
-									}}
-									key={collection.name}
-								>
-									<MainCollectionCard {...collection} />
-								</Pressable>
-							))}
-						</Box>
-					)}
-					<RAnimated.View
-						style={[otherCollectionsStyle, { overflow: "hidden" }]}
-					>
-						<Box gap={10} wrap="wrap" direction="row">
-							{collections.map((collection) => (
-								<Pressable
-									style={{ width: "48%" }}
-									onPress={() => {
-										router.push({
-											pathname: `/collections/${collection.name}`,
-											params: {
-												collection: JSON.stringify(collection),
-											},
-										});
-									}}
-									key={collection.name}
-								>
-									<OtherCollectionCard {...collection} />
-								</Pressable>
-							))}
-						</Box>
-					</RAnimated.View>
-					<Box>
-						<RAnimated.View style={[expanderChevronStyle]}>
-							<ThemedButton
-								onPress={() => {
-									animateLayout();
-									expandCollections.value = !expandCollections.value;
-								}}
-								type="text"
-							>
-								<ThemedIcon name={"chevron-down"} />
-							</ThemedButton>
-						</RAnimated.View>
-					</Box>
-				</Box>
-
-				{products && (
-					<>
-						<Box gap={10}>
-							<ThemedText size="lg" weight="bold">
-								Featured
-							</ThemedText>
-							<Carousel
-								data={products.slice(0, 8)}
-								renderItem={({ item }) => (
-									<ProductCard key={item.name} product={item} />
-								)}
-								width={productImageSize + 20}
-								height={productImageSize + 100}
-								autoPlay
-								autoPlayInterval={2000}
-								style={{ width: sWidth - 30 }}
-								pagingEnabled
-								panGestureHandlerProps={{
-									activeOffsetX: [-10, 10],
-								}}
-							/>
-						</Box>
-
-						<Box gap={10}>
-							<ThemedText size="lg" weight="bold">
-								New Arrivals
-							</ThemedText>
-							<Box
-								wrap="wrap"
-								style={{ rowGap: 10 }}
-								direction="row"
-								block
-								justify="space-between"
-							>
-								{products.slice(8).map((product) => (
-									<ProductCard key={product.id} product={product} />
+			<Page gap={40} pb={120}>
+				<RAnimated.ScrollView ref={scrollViewRef}>
+					<Box gap={10}>
+						{mainCollections && (
+							<Box gap={10} wrap="wrap" direction="row">
+								{mainCollections.map((collection) => (
+									<Pressable
+										style={{ width: "48%" }}
+										onPress={() => {
+											router.push({
+												pathname: `/collections/${collection.name}`,
+												params: {
+													collection: JSON.stringify(collection),
+												},
+											});
+										}}
+										key={collection.name}
+									>
+										<MainCollectionCard {...collection} />
+									</Pressable>
 								))}
 							</Box>
+						)}
+						<RAnimated.View
+							style={[otherCollectionsStyle, { overflow: "hidden" }]}
+						>
+							<Box gap={10} wrap="wrap" direction="row">
+								{collections.map((collection) => (
+									<Pressable
+										style={{ width: "48%" }}
+										onPress={() => {
+											router.push({
+												pathname: `/collections/${collection.name}`,
+												params: {
+													collection: JSON.stringify(collection),
+												},
+											});
+										}}
+										key={collection.name}
+									>
+										<OtherCollectionCard {...collection} />
+									</Pressable>
+								))}
+							</Box>
+						</RAnimated.View>
+						<Box>
+							<RAnimated.View style={[expanderChevronStyle]}>
+								<ThemedButton
+									onPress={() => {
+										animateLayout();
+										expandCollections.value = !expandCollections.value;
+									}}
+									type="text"
+								>
+									<ThemedIcon name={"chevron-down"} />
+								</ThemedButton>
+							</RAnimated.View>
 						</Box>
-					</>
-				)}
+					</Box>
+
+					{products && (
+						<>
+							<Box gap={10}>
+								<ThemedText size="lg" weight="bold">
+									Featured
+								</ThemedText>
+								<Carousel
+									data={products.slice(0, 8)}
+									renderItem={({ item }) => (
+										<ProductCard key={item.name} product={item} />
+									)}
+									width={productImageSize + 20}
+									height={productImageSize + 100}
+									autoPlay
+									autoPlayInterval={2000}
+									style={{ width: sWidth - 30 }}
+									pagingEnabled
+									panGestureHandlerProps={{
+										activeOffsetX: [-10, 10],
+									}}
+								/>
+							</Box>
+
+							<Box gap={10}>
+								<ThemedText size="lg" weight="bold">
+									New Arrivals
+								</ThemedText>
+								<Box
+									wrap="wrap"
+									style={{ rowGap: 10 }}
+									direction="row"
+									block
+									justify="space-between"
+								>
+									{products.slice(8).map((product) => (
+										<ProductCard key={product.id} product={product} />
+									))}
+								</Box>
+							</Box>
+						</>
+					)}
+				</RAnimated.ScrollView>
 			</Page>
 		</>
 	);
