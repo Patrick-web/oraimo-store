@@ -12,18 +12,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Box, { BoxProps } from "./Box";
 
 const Page = forwardRef(
-	(
-		{
-			children,
-			scrollable = false,
-			header,
-			headerComponent,
-			disableHeader = false,
-			onScroll,
-			...props
-		}: PageProps,
-		ref
-	) => {
+	({ children, scrollable = false, onScroll, ...props }: PageProps, ref) => {
 		const scrollRef = React.useRef<ScrollView>(null);
 
 		function scrollToTop() {
@@ -49,25 +38,30 @@ const Page = forwardRef(
 		return (
 			<>
 				{scrollable ? (
-					<Box
-						color={backgroundColor}
-						style={{ minHeight: "100%" }}
-						width={sWidth}
-						px={15}
-						pb={header ? 120 : 30}
-						pt={5}
-						{...props}
-					>
+					<Box style={{ minHeight: "100%" }} flex={1}>
 						<Animated.ScrollView
 							contentContainerStyle={{
-								gap: props.gap,
+								backgroundColor: "red",
+								minHeight: "100%",
+							}}
+							style={{
+								width: sWidth,
 							}}
 							ref={scrollRef}
 							onScroll={onScroll}
-							// throttle scroll events
 							scrollEventThrottle={24}
 						>
-							{children}
+							<Box
+								color={backgroundColor}
+								width={"100%"}
+								px={15}
+								pb={insets.bottom}
+								pt={5}
+								{...props}
+								height={"100%"}
+							>
+								{children}
+							</Box>
 						</Animated.ScrollView>
 					</Box>
 				) : (
@@ -76,7 +70,8 @@ const Page = forwardRef(
 						color={backgroundColor}
 						style={{ minHeight: "100%" }}
 						px={15}
-						pb={header ? 120 : 30}
+						pb={insets.bottom}
+						flex={1}
 						{...props}
 					>
 						{children}

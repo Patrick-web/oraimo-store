@@ -14,9 +14,11 @@ import { ReturnWrapper } from "@/types/util.types";
 import { useQuery } from "@tanstack/react-query";
 import { Image } from "expo-image";
 import { Stack, router, useLocalSearchParams } from "expo-router";
+import { StatusBar } from "expo-status-bar";
 import React, { useState } from "react";
-import { ScrollView } from "react-native";
+import { Platform, ScrollView, useColorScheme } from "react-native";
 import Carousel from "react-native-reanimated-carousel";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const imageSize = sWidth - 100;
 
@@ -47,8 +49,13 @@ export default function Product() {
 
 	const primaryColor = useThemeColor("primary");
 
+	const colorScheme = useColorScheme();
+
+	const insets = useSafeAreaInsets();
+
 	return (
 		<>
+			<StatusBar style={"auto"} />
 			<Stack.Screen
 				options={{
 					title: "",
@@ -68,9 +75,22 @@ export default function Product() {
 							<ThemedIcon name="shopping-cart" size={22} />
 						</ThemedButton>
 					),
+					headerLeft: () => (
+						<ThemedButton
+							onPress={() => {
+								router.back();
+							}}
+							type="text"
+						>
+							<ThemedIcon
+								name={Platform.OS === "android" ? "arrow-left" : "chevron-left"}
+								size={"xl"}
+							/>
+						</ThemedButton>
+					),
 				}}
 			/>
-			<Page scrollable position="relative" pb={90}>
+			<Page scrollable position="relative" pb={insets.bottom}>
 				{isError && <ThemedText>{error.message}</ThemedText>}
 				{isLoading && preview && <ProductPreview product={preview} />}
 				{product && (
@@ -92,7 +112,7 @@ export default function Product() {
 												style={{
 													width: imageSize,
 													height: imageSize,
-													borderRadius: 20,
+													// borderRadius: 20,
 												}}
 												contentFit="cover"
 											/>
@@ -203,6 +223,7 @@ export default function Product() {
 				direction="row"
 				gap={20}
 				pa={20}
+				pb={20 + insets.bottom}
 				color={background}
 			>
 				<ThemedButton label={"Add To Cart"} size="sm" flex={1} type="surface" />
@@ -246,8 +267,8 @@ function HighlightFeature({
 		>
 			<Image
 				source={{ uri: feature.image }}
-				style={{ width: 30, height: 30 }}
-				tintColor={textColor}
+				style={{ width: 20, height: 20 }}
+				// tintColor={textColor}
 			/>
 			<ThemedText size={"sm"} style={{ flex: 1 }} numberOfLines={2}>
 				{feature.label}

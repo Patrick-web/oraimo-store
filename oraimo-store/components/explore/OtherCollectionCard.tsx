@@ -1,10 +1,12 @@
 import { useThemeColor } from "@/hooks/theme.hook";
 import { MainCollectionType } from "@/types/collection.types";
+import { View } from "moti";
+import { StyleSheet } from "react-native";
 import Animated from "react-native-reanimated";
 import Box from "../reusable/Box";
 import ThemedText from "../reusable/ThemedText";
 
-export default function MainCollectionCard(collection: MainCollectionType) {
+export default function (collection: MainCollectionType) {
 	return (
 		<Box
 			key={collection.name}
@@ -19,22 +21,25 @@ export default function MainCollectionCard(collection: MainCollectionType) {
 				sharedTransitionTag={collection.image}
 				resizeMode="cover"
 			/>
-			<ThemedText
-				style={{
-					position: "absolute",
-					top: 10,
-					left: 10,
-				}}
-				color={"white"}
-				weight="bold"
+			<View
+				style={[
+					StyleSheet.absoluteFillObject,
+					{
+						backgroundColor: "rgba(0,0,0,0.1)",
+						justifyContent: "flex-end",
+						padding: 10,
+					},
+				]}
 			>
-				{collection.name}
-			</ThemedText>
+				<ThemedText color={"white"} weight="bold">
+					{collection.name}
+				</ThemedText>
+			</View>
 		</Box>
 	);
 }
 
-export function MainCollectionCardSkeleton() {
+export function OtherCollectionCardSkeleton() {
 	const background = useThemeColor("surface");
 	return (
 		<Box

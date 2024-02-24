@@ -17,3 +17,18 @@ export function useThemeColor(
         return Colors[theme][colorName];
     }
 }
+
+
+export function useAppTheme() {
+    const mode = useColorScheme() ?? 'light';
+
+    return {
+        mode,
+        theme: Colors[mode],
+    };
+}
+
+export default function getThemeColors() {
+    const theme = useColorScheme() ?? 'light';
+    return Colors[theme];
+}

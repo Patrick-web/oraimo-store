@@ -1,13 +1,16 @@
 import MainCollectionCard, {
 	MainCollectionCardSkeleton,
 } from "@/components/explore/MainCollectionCard";
+import OtherCollectionCard from "@/components/explore/OtherCollectionCard";
 import ProductCard, {
 	ProductCardSkeleton,
 	productImageSize,
 } from "@/components/explore/ProductCard";
 import Box from "@/components/reusable/Box";
+import ThemedButton from "@/components/reusable/Buttons";
 import Page from "@/components/reusable/Page";
 import { SearchBar } from "@/components/reusable/TextInputs";
+import ThemedIcon from "@/components/reusable/ThemedIcon";
 import ThemedText from "@/components/reusable/ThemedText";
 import { BASE_URL } from "@/constants/API";
 import { sWidth } from "@/constants/Window";
@@ -15,10 +18,16 @@ import { useThemeColor } from "@/hooks/theme.hook";
 import { Collection, MainCollectionType } from "@/types/collection.types";
 import { ProductItemType } from "@/types/product.types";
 import { ReturnWrapper } from "@/types/util.types";
+import { animateLayout } from "@/utils/animation.util";
 import { useQuery } from "@tanstack/react-query";
 import { Stack, router } from "expo-router";
 import { useRef, useState } from "react";
 import { Animated, Pressable } from "react-native";
+import RAnimated, {
+	useAnimatedStyle,
+	useSharedValue,
+	withTiming,
+} from "react-native-reanimated";
 import Carousel from "react-native-reanimated-carousel";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -43,13 +52,9 @@ export default function Home() {
 
 	const mainCollections = homeQuery.data?.data.mainCollections;
 
-	const collections = collectionsQuery.data?.data.map((collection) => ({
-		...collection,
-		image:
-			mainCollections?.find(
-				(mainCollection) => mainCollection.name === collection.name
-			)?.image || collection.image,
-	}));
+	const collections = collectionsQuery.data?.data.filter(
+		(c) => !mainCollections?.find((mc) => mc.name === c.name)
+	);
 
 	const products = homeQuery.data?.data.products;
 
@@ -76,6 +81,18 @@ export default function Home() {
 	if (homeQuery.isError || collectionsQuery.isError) {
 		return <HomeError />;
 	}
+
+	const expandCollections = useSharedValue(false);
+	const otherCollectionsStyle = useAnimatedStyle(() => {
+		return {
+			maxHeight: withTiming(expandCollections.value ? 300 : 0),
+		};
+	});
+	const expanderChevronStyle = useAnimatedStyle(() => {
+		return {
+			transform: [{ rotate: `${expandCollections.value ? "180deg" : "0deg"}` }],
+		};
+	});
 
 	return (
 		<>
@@ -126,27 +143,65 @@ export default function Home() {
 					[{ nativeEvent: { contentOffset: { y: scrollY } } }],
 					{ useNativeDriver: false }
 				)}
+				pb={120}
 			>
-				{collections && (
-					<Box gap={10} wrap="wrap" direction="row">
-						{collections.map((collection) => (
-							<Pressable
-								style={{ width: "48%" }}
+				<Box gap={10}>
+					{mainCollections && (
+						<Box gap={10} wrap="wrap" direction="row">
+							{mainCollections.map((collection) => (
+								<Pressable
+									style={{ width: "48%" }}
+									onPress={() => {
+										router.push({
+											pathname: `/collections/${collection.name}`,
+											params: {
+												collection: JSON.stringify(collection),
+											},
+										});
+									}}
+									key={collection.name}
+								>
+									<MainCollectionCard {...collection} />
+								</Pressable>
+							))}
+						</Box>
+					)}
+					<RAnimated.View
+						style={[otherCollectionsStyle, { overflow: "hidden" }]}
+					>
+						<Box gap={10} wrap="wrap" direction="row">
+							{collections.map((collection) => (
+								<Pressable
+									style={{ width: "48%" }}
+									onPress={() => {
+										router.push({
+											pathname: `/collections/${collection.name}`,
+											params: {
+												collection: JSON.stringify(collection),
+											},
+										});
+									}}
+									key={collection.name}
+								>
+									<OtherCollectionCard {...collection} />
+								</Pressable>
+							))}
+						</Box>
+					</RAnimated.View>
+					<Box>
+						<RAnimated.View style={[expanderChevronStyle]}>
+							<ThemedButton
 								onPress={() => {
-									router.push({
-										pathname: `/collections/${collection.slug}`,
-										params: {
-											collection: JSON.stringify(collection),
-										},
-									});
+									animateLayout();
+									expandCollections.value = !expandCollections.value;
 								}}
-								key={collection.name}
+								type="text"
 							>
-								<MainCollectionCard {...collection} />
-							</Pressable>
-						))}
+								<ThemedIcon name={"chevron-down"} />
+							</ThemedButton>
+						</RAnimated.View>
 					</Box>
-				)}
+				</Box>
 
 				{products && (
 					<>

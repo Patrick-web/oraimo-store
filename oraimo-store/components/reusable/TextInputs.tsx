@@ -42,12 +42,12 @@ export default function ThemedTextInput({
 					<ThemedText size={"sm"} fontWeight="light" {...labelProps}>
 						{label}
 					</ThemedText>
-					<Spacer height={5} />
+					<Spacer height={10} />
 				</>
 			)}
 			<>
 				<Box
-					radius={30}
+					radius={20}
 					direction="row"
 					justify="flex-start"
 					color={theme.surface}
@@ -134,6 +134,7 @@ export function ThemedEmailInput(props: ThemedTextInputProps) {
 			placeholder="Email"
 			keyboardType="email-address"
 			rightSlot={<ThemedIcon name="mail" size={18} />}
+			rightSlotProps={{ pr: 20 }}
 			{...props}
 		/>
 	);
@@ -151,11 +152,11 @@ export function ThemedPasswordInput(props: ThemedTextInputProps) {
 			{...props}
 			secureTextEntry={!showPassword}
 			rightSlot={
-				<ThemedIconButton
-					icon={{ name: showPassword ? "eye-off" : "eye" }}
-					onPress={() => setShowPassword((value) => !value)}
-				/>
+				<ThemedButton onPress={() => setShowPassword(!showPassword)}>
+					<ThemedIcon name={showPassword ? "eye-off" : "eye"} size={18} />
+				</ThemedButton>
 			}
+			rightSlotProps={{ pr: 20 }}
 		/>
 	);
 }

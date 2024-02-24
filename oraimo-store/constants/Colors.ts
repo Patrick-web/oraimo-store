@@ -26,4 +26,4 @@ export default {
     warning: '#ffae00',
     success: '#00ff00',
   },
-};
+} as const;

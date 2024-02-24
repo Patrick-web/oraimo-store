@@ -6,14 +6,15 @@ import ThemedIcon from "@/components/reusable/ThemedIcon";
 import ThemedText from "@/components/reusable/ThemedText";
 import { BASE_URL } from "@/constants/API";
 import { useThemeColor } from "@/hooks/theme.hook";
-import { Collection } from "@/types/collection.types";
+import { MainCollectionType } from "@/types/collection.types";
 import { ProductItemType } from "@/types/product.types";
 import { ReturnWrapper } from "@/types/util.types";
 import { debounce } from "@/utils/debounce.util";
 import { useQuery } from "@tanstack/react-query";
 import { Stack, router, useLocalSearchParams } from "expo-router";
+import { StatusBar } from "expo-status-bar";
 import React, { useRef } from "react";
-import { Animated } from "react-native";
+import { Animated, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function CollectionPage() {
@@ -30,14 +31,14 @@ export default function CollectionPage() {
 		);
 	}
 
-	const collection = JSON.parse(collectionJSON) as Collection;
+	const collection = JSON.parse(collectionJSON) as MainCollectionType;
 
-	const queryUrl = `${BASE_URL}/collections/${slug}`;
+	const queryUrl = `${BASE_URL}${collection.link}`;
 
 	console.log({ queryUrl });
 
 	const collectionProductsQuery = useQuery<ReturnWrapper<ProductItemType[]>>({
-		queryKey: [`collections/${slug}`],
+		queryKey: [queryUrl],
 		queryFn: () => fetch(queryUrl).then((res) => res.json()),
 	});
 
@@ -52,9 +53,12 @@ export default function CollectionPage() {
 
 	const debouncedScrollY = debounce(() => scrollY, 100);
 
+	const MAX_HEADER_HEIGHT = Platform.OS === "ios" ? 250 : 200;
+	const MIN_HEADER_HEIGHT = Platform.OS === "ios" ? 100 : 80;
+
 	const headerHeight = scrollY.interpolate({
 		inputRange: [0, 200],
-		outputRange: [200, 80],
+		outputRange: [MAX_HEADER_HEIGHT, MIN_HEADER_HEIGHT],
 		extrapolate: "clamp",
 	});
 
@@ -66,7 +70,7 @@ export default function CollectionPage() {
 
 	const translateY = scrollY.interpolate({
 		inputRange: [0, 200],
-		outputRange: [0, -118],
+		outputRange: [0, -MAX_HEADER_HEIGHT + MIN_HEADER_HEIGHT],
 		extrapolate: "clamp",
 	});
 
@@ -96,11 +100,12 @@ export default function CollectionPage() {
 										source={{ uri: collection.image }}
 										style={{
 											width: "100%",
-											height: 200,
+											height: MAX_HEADER_HEIGHT,
 										}}
 										blurRadius={headerImageBlurRadius}
 										resizeMode="cover"
 									/>
+
 									<Animated.View
 										style={{
 											transform: [{ translateX }, { translateY }],
@@ -125,7 +130,14 @@ export default function CollectionPage() {
 										px={15}
 										py={15}
 										position="absolute"
-										style={{ top: insets.top, left: 0, right: 0 }}
+										style={{
+											top:
+												Platform.OS === "ios"
+													? MIN_HEADER_HEIGHT / 2.2
+													: insets.top,
+											left: 0,
+											right: 0,
+										}}
 									>
 										<ThemedButton
 											type="text"
@@ -169,8 +181,10 @@ export default function CollectionPage() {
 					}}
 				/>
 			)}
+			<StatusBar style={collection.image ? "light" : "dark"} />
 			<Page
 				px={0}
+				pb={collection.image ? MAX_HEADER_HEIGHT / 2 : insets.bottom}
 				scrollable
 				gap={10}
 				onScroll={
@@ -179,7 +193,7 @@ export default function CollectionPage() {
 					}) as any
 				}
 			>
-				{collection.subCollections && (
+				{collection?.subCollections && (
 					<Box>
 						{collection.subCollections.map((subCollection) => (
 							<ThemedButton
